@@ -89,6 +89,8 @@ export default function App() {
   const [showAddAgendaModal, setShowAddAgendaModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingAgenda, setEditingAgenda] = useState<Agenda | null>(null);
+  const [editingOfficer, setEditingOfficer] = useState<Officer | null>(null);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
 
   // --- Agenda Form ---
   const emptyAgendaForm = {
@@ -220,11 +222,10 @@ export default function App() {
     }
     setUserCreateLoading(true);
     try {
-      // 1. Buat akun Firebase Auth menggunakan secondary app (tidak mengganggu sesi Admin)
+      // 1. Buat akun Firebase Auth menggunakan secondary app
       const secondaryAuth = getSecondaryAuth();
       const email = `${userForm.username}@sinora.internal`;
       await createUserWithEmailAndPassword(secondaryAuth, email, userForm.password);
-      // Sign out dari secondary app agar tidak ada konflik
       await secondaryAuth.signOut();
 
       // 2. Simpan profil petugas ke Firestore
@@ -253,6 +254,35 @@ export default function App() {
     }
   };
 
+  const openEditOfficer = (officer: Officer) => {
+    setEditingOfficer(officer);
+    setUserForm({ username: officer.username, name: officer.name, nip: officer.nip || '', division: officer.division, role: officer.role, password: '' });
+    setShowEditUserModal(true);
+  };
+
+  const updateOfficer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOfficer) return;
+    try {
+      await updateDoc(doc(db, 'officers', editingOfficer.id), {
+        name: userForm.name,
+        nip: userForm.nip,
+        division: userForm.division,
+        role: userForm.role
+      });
+      setShowEditUserModal(false);
+      setEditingOfficer(null);
+      setUserForm({ username: '', name: '', nip: '', division: 'KPR', role: 'Petugas', password: '' });
+    } catch (err: any) { alert('❌ Gagal memperbarui: ' + err.message); }
+  };
+
+  const deleteOfficer = async (id: string, name: string) => {
+    if (!window.confirm(`Hapus akun petugas "${name}"? Akun login mereka tidak ikut terhapus.`)) return;
+    try {
+      await deleteDoc(doc(db, 'officers', id));
+    } catch (err: any) { alert('❌ Gagal menghapus: ' + err.message); }
+  };
+
   // ---- Filtered Agenda ----
   const filteredAgendas = agendas.filter(item => {
     const s = (agendaSearch || '').toLowerCase();
@@ -270,8 +300,6 @@ export default function App() {
   });
 
   // ---- Stats ----
-  const totalToday = agendas.filter(a => (a.tanggal || a.date || '') === todayStr).length;
-  const totalUpcoming = agendas.filter(a => (a.tanggal || a.date || '') > todayStr).length;
   const totalSurat = agendas.length;
   const totalPetugas = officers.length;
   const todayAgendas = agendas.filter(a => (a.tanggal || a.date || '') === todayStr);
@@ -487,21 +515,11 @@ export default function App() {
               {/* Stats Cards */}
               <div className="stats-grid">
                 <div className="stat-card blue">
-                  <div className="stat-label">Agenda / Surat Hari Ini</div>
-                  <div className="stat-number">{String(totalToday).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">schedule</span>{totalToday} agenda tercatat hari ini</div>
-                </div>
-                <div className="stat-card indigo">
-                  <div className="stat-label">Agenda Mendatang</div>
-                  <div className="stat-number">{String(totalUpcoming).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">event</span>Surat / agenda akan datang</div>
+                  <div className="stat-label">Total Seluruh Arsip Surat</div>
+                  <div className="stat-number">{String(totalSurat).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">folder</span>Surat tercatat dalam sistem</div>
                 </div>
                 <div className="stat-card green">
-                  <div className="stat-label">Total Seluruh Surat</div>
-                  <div className="stat-number">{String(totalSurat).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">mail</span>Tercatat dalam sistem</div>
-                </div>
-                <div className="stat-card amber">
                   <div className="stat-label">Total Petugas Aktif</div>
                   <div className="stat-number">{String(totalPetugas).padStart(2, '0')}</div>
                   <div className="stat-meta"><span className="material-symbols-outlined">group</span>Terdaftar di sistem</div>
@@ -554,7 +572,7 @@ export default function App() {
                 {/* Right Panel */}
                 <div className="right-panel">
                   <div className="panel-card">
-                    <h4>Petugas Piket Hari Ini</h4>
+                    <h4>Petugas Terdaftar</h4>
                     {officers.slice(0, 3).length === 0 ? (
                       <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '16px 0' }}>Belum ada petugas terdaftar.</div>
                     ) : (
@@ -581,11 +599,11 @@ export default function App() {
                   </div>
 
                   <div className="panel-card">
-                    <h4>Agenda Mendatang</h4>
-                    {agendas.filter(a => (a.tanggal || a.date || '') > todayStr).slice(0, 3).length === 0 ? (
-                      <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '8px 0' }}>Tidak ada agenda mendatang.</div>
+                    <h4>Arsip Surat Terbaru</h4>
+                    {agendas.slice(-4).reverse().length === 0 ? (
+                      <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '8px 0' }}>Belum ada arsip surat.</div>
                     ) : (
-                      agendas.filter(a => (a.tanggal || a.date || '') > todayStr).slice(0, 3).map(item => (
+                      agendas.slice(-4).reverse().map(item => (
                         <div key={item.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f4ff' }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: '#0d1c2e' }}>{item.keteranganIsiSurat || item.title || '-'}</div>
                           <div style={{ fontSize: 11, color: '#737686', marginTop: 2 }}>{item.tanggal || item.date} · No: {item.nomorSurat || '-'}</div>
@@ -745,32 +763,49 @@ export default function App() {
                 <table>
                   <thead>
                     <tr>
-                      <th>ID User</th>
+                      <th>Username</th>
                       <th>Nama Lengkap</th>
                       <th>NIP</th>
                       <th>Divisi</th>
                       <th>Role</th>
                       <th>Status</th>
+                      <th style={{ textAlign: 'center' }}>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Super Admin Bawaan */}
+                    {/* Super Admin Bawaan - tidak bisa dihapus/diedit */}
                     <tr style={{ background: '#eff4ff' }}>
                       <td className="td-primary" style={{ color: '#004ac6' }}>glubis</td>
                       <td>Gilang Lubis</td>
                       <td>19950815 202012 1 001</td>
                       <td><span className="division-tag">TI & Admin</span></td>
-                      <td><span style={{ background: '#004ac6', color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Super Admin</span></td>
+                      <td><span style={{ background: '#004ac6', color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 4 }}>Super Admin</span></td>
                       <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>Aktif</span></td>
+                      <td style={{ textAlign: 'center', color: '#b0b0c0', fontSize: 11 }}>—</td>
                     </tr>
+                    {officers.length === 0 && (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#737686' }}>Belum ada petugas terdaftar. Klik "+ Buat Akun Baru".</td>
+                      </tr>
+                    )}
                     {officers.map(user => (
                       <tr key={user.id}>
                         <td className="td-primary">{user.username}</td>
                         <td>{user.name}</td>
                         <td>{user.nip || '-'}</td>
-                        <td><span className="division-tag">{user.division}</span></td>
-                        <td><span style={{ background: '#e6eeff', color: '#004ac6', padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{user.role}</span></td>
+                        <td><span className={divisionColor(user.division)}>{user.division}</span></td>
+                        <td><span style={{ background: '#e6eeff', color: '#004ac6', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 4 }}>{user.role}</span></td>
                         <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>{user.status}</span></td>
+                        <td>
+                          <div className="action-btns">
+                            <button className="action-btn edit" onClick={() => openEditOfficer(user)} title="Edit">
+                              <span className="material-symbols-outlined">edit</span>
+                            </button>
+                            <button className="action-btn delete" onClick={() => deleteOfficer(user.id, user.name || user.username)} title="Hapus">
+                              <span className="material-symbols-outlined">delete</span>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -998,6 +1033,59 @@ export default function App() {
                 <button type="submit" className="btn-save" disabled={userCreateLoading}>
                   {userCreateLoading ? 'Membuat Akun...' : 'Buat Akun Petugas'}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================== MODAL EDIT USER ======================== */}
+      {showEditUserModal && editingOfficer && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Edit Data Petugas</h3>
+              <button className="modal-close-btn" onClick={() => { setShowEditUserModal(false); setEditingOfficer(null); }}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <form onSubmit={updateOfficer}>
+              <div className="modal-body">
+                <div className="modal-form">
+                  <div className="modal-field">
+                    <label>Username (tidak bisa diubah)</label>
+                    <input type="text" disabled value={editingOfficer.username} style={{ background: '#e2e8f0', cursor: 'not-allowed', color: '#434655' }} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Nama Lengkap</label>
+                    <input type="text" required placeholder="Nama Petugas" value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>NIP (Opsional)</label>
+                    <input type="text" placeholder="Nomor Induk Pegawai" value={userForm.nip} onChange={e => setUserForm({ ...userForm, nip: e.target.value })} />
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Divisi</label>
+                      <select value={userForm.division} onChange={e => setUserForm({ ...userForm, division: e.target.value })}>
+                        <option>KPR</option>
+                        <option>Pengelolaan</option>
+                        <option>Pelayan Tahanan</option>
+                      </select>
+                    </div>
+                    <div className="modal-field">
+                      <label>Role</label>
+                      <select value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value as Officer['role'] })}>
+                        <option value="Petugas">Petugas</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => { setShowEditUserModal(false); setEditingOfficer(null); }}>Batal</button>
+                <button type="submit" className="btn-save">Simpan Perubahan</button>
               </div>
             </form>
           </div>
