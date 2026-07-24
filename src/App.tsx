@@ -825,8 +825,8 @@ export default function App() {
               <div className="report-wrap">
                 <div className="report-header-bar">
                   <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 800 }}>Pratinjau Laporan Resmi</h3>
-                    <p style={{ fontSize: 13, color: '#737686', marginTop: 2 }}>Format Kop Surat Rutan Kelas IIB Painan</p>
+                    <h3 style={{ fontSize: 18, fontWeight: 800 }}>Pratinjau Laporan</h3>
+                    <p style={{ fontSize: 13, color: '#737686', marginTop: 2 }}>Laporan Rekapitulasi Agenda Rutan Kelas IIB Painan</p>
                   </div>
                   <button className="print-btn" onClick={() => window.print()}>
                     <span className="material-symbols-outlined">print</span>
@@ -834,17 +834,10 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Kop Surat */}
+                {/* Report Container */}
                 <div className="kop-surat">
-                  <div className="kop-surat-header">
-                    <h6>KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI</h6>
-                    <h4>KANTOR WILAYAH SUMATERA BARAT</h4>
-                    <h3>RUMAH TAHANAN NEGARA KELAS IIB PAINAN</h3>
-                    <small>Jl. Merdeka No. 12 Painan, Kab. Pesisir Selatan – Sumatera Barat</small>
-                  </div>
-
-                  <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 13, textDecoration: 'underline', textTransform: 'uppercase', marginBottom: 16 }}>
-                    Laporan Rekapitulasi Agenda & Kegiatan Rutan
+                  <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 15, textTransform: 'uppercase', marginBottom: 20, color: '#0d1c2e' }}>
+                    Laporan Rekapitulasi Agenda Rutan Kelas IIB Painan
                   </div>
 
                   <table className="kop-table">
