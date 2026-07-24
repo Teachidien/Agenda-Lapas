@@ -31,10 +31,37 @@ body {
   width: 100%;
   max-width: 440px;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.25));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  color: #60a5fa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.sparkle-icon {
+  color: #fbbf24;
 }
 
 /* Login Card */
 .login-card {
+  width: 100%;
   background: var(--card-bg);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
@@ -167,6 +194,7 @@ body {
 
 /* Dashboard Card */
 .dashboard-card {
+  width: 100%;
   background: var(--card-bg);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);

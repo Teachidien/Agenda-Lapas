@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from './services/firebase';
-import { Lock, User, LogOut, Calendar, ShieldCheck } from 'lucide-react';
+import { Lock, User, LogOut, Calendar, ShieldCheck, Sparkles } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -54,6 +54,12 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Banner Selamat Datang di Web SINORA */}
+      <div className="welcome-banner">
+        <Sparkles size={20} className="sparkle-icon" />
+        <span>Selamat datang di web SINORA</span>
+      </div>
+
       {currentUser ? (
         <div className="dashboard-card">
           <div className="dashboard-header">
@@ -65,7 +71,7 @@ function App() {
             <div className="placeholder-box">
               <Calendar size={48} className="icon-calendar" />
               <h3>Modul Agenda & Jadwal Kegiatan</h3>
-              <p>Sistem otentikasi Firebase berhasil terhubung. Fitur manajemen agenda sedang dalam pengembangan.</p>
+              <p>Sistem otentikasi Firebase berhasil terhubung. Fitur manajemen agenda sedang dalam tahap pembangunan antarmuka (UI).</p>
             </div>
             <button onClick={handleLogout} className="btn-logout">
               <LogOut size={18} /> Keluar Aplikasi
