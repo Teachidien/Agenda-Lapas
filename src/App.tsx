@@ -866,16 +866,6 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
-
-                  <div className="ttd-section">
-                    <div className="ttd-box">
-                      <p>Painan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                      <p style={{ marginTop: 4 }}>Kepala Rutan Kelas IIB Painan</p>
-                      <div className="ttd-space"></div>
-                      <p className="ttd-name">GILANG LUBIS, S.H.</p>
-                      <p style={{ fontSize: 11, color: '#737686' }}>NIP. 19950815 202012 1 001</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </>
