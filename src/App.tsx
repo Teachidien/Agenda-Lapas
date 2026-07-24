@@ -116,7 +116,9 @@ export default function App() {
     if (!currentUser) return;
     const q = query(collection(db, 'agendas'), orderBy('date', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
-      setAgendas(snap.docs.map(d => ({ id: d.id, ...d.data() } as Agenda)));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Agenda));
+      data.sort((a, b) => (a.nomorUrut || 0) - (b.nomorUrut || 0));
+      setAgendas(data);
     });
     return () => unsub();
   }, [currentUser]);
