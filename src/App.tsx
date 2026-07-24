@@ -21,16 +21,21 @@ import './App.css';
 // ---- TIPE DATA ----
 interface Agenda {
   id: string;
-  title: string;
-  date: string;
-  time: string;
-  timeEnd?: string;
-  location: string;
-  responsible: string;
-  division: string;
-  category: string;
-  status: 'Proses' | 'Selesai' | 'Mendatang' | 'Penting';
+  nomorUrut?: number; // Auto generate (1, 2, 3...)
+  nomorSurat: string; // Nomor Surat
+  tanggal: string; // Tanggal Surat / Agenda (YYYY-MM-DD)
+  alamatSurat: string; // Alamat Surat (Tujuan / Pengirim)
+  keteranganIsiSurat: string; // Keterangan Isi Surat
+  // Properti pendukung / backward compatibility
+  date?: string;
+  location?: string;
+  title?: string;
   description?: string;
+  time?: string;
+  timeEnd?: string;
+  responsible?: string;
+  division?: string;
+  status: 'Proses' | 'Selesai' | 'Mendatang' | 'Penting';
   createdAt?: any;
 }
 
@@ -100,9 +105,12 @@ export default function App() {
 
   // --- Agenda Form ---
   const emptyAgendaForm = {
-    title: '', date: todayStr, time: '08:00', timeEnd: '09:00',
-    location: 'Aula Rutan IIB Painan', responsible: '', division: 'Kamtib',
-    category: 'Rapat Internal', status: 'Mendatang' as Agenda['status'], description: ''
+    nomorSurat: '',
+    tanggal: todayStr,
+    alamatSurat: '',
+    keteranganIsiSurat: '',
+    division: 'Kamtib',
+    status: 'Mendatang' as Agenda['status']
   };
   const [agendaForm, setAgendaForm] = useState(emptyAgendaForm);
 
@@ -159,12 +167,19 @@ export default function App() {
   // ---- CRUD Agenda ----
   const openAddModal = () => {
     setEditingAgenda(null);
-    setAgendaForm({ ...emptyAgendaForm, responsible: currentUser?.email?.split('@')[0] || '' });
+    setAgendaForm({ ...emptyAgendaForm });
     setShowAddAgendaModal(true);
   };
   const openEditModal = (a: Agenda) => {
     setEditingAgenda(a);
-    setAgendaForm({ title: a.title, date: a.date, time: a.time, timeEnd: a.timeEnd || '', location: a.location, responsible: a.responsible, division: a.division, category: a.category, status: a.status, description: a.description || '' });
+    setAgendaForm({
+      nomorSurat: a.nomorSurat || '',
+      tanggal: a.tanggal || a.date || todayStr,
+      alamatSurat: a.alamatSurat || a.location || '',
+      keteranganIsiSurat: a.keteranganIsiSurat || a.title || a.description || '',
+      division: a.division || 'Kamtib',
+      status: a.status || 'Mendatang'
+    });
     setShowAddAgendaModal(true);
   };
 
@@ -172,9 +187,34 @@ export default function App() {
     e.preventDefault();
     try {
       if (editingAgenda) {
-        await updateDoc(doc(db, 'agendas', editingAgenda.id), { ...agendaForm });
+        await updateDoc(doc(db, 'agendas', editingAgenda.id), {
+          nomorSurat: agendaForm.nomorSurat,
+          tanggal: agendaForm.tanggal,
+          date: agendaForm.tanggal, // sync legacy date
+          alamatSurat: agendaForm.alamatSurat,
+          location: agendaForm.alamatSurat, // sync legacy location
+          keteranganIsiSurat: agendaForm.keteranganIsiSurat,
+          title: agendaForm.keteranganIsiSurat, // sync legacy title
+          division: agendaForm.division,
+          status: agendaForm.status
+        });
       } else {
-        await addDoc(collection(db, 'agendas'), { ...agendaForm, createdAt: serverTimestamp() });
+        // Auto generate Nomor Urut
+        const nextNoUrut = agendas.length > 0 ? (Math.max(...agendas.map(a => a.nomorUrut || 0)) + 1) : 1;
+        await addDoc(collection(db, 'agendas'), {
+          nomorUrut: nextNoUrut,
+          nomorSurat: agendaForm.nomorSurat,
+          tanggal: agendaForm.tanggal,
+          date: agendaForm.tanggal,
+          alamatSurat: agendaForm.alamatSurat,
+          location: agendaForm.alamatSurat,
+          keteranganIsiSurat: agendaForm.keteranganIsiSurat,
+          title: agendaForm.keteranganIsiSurat,
+          division: agendaForm.division,
+          status: agendaForm.status,
+          responsible: currentUser?.email?.split('@')[0] || 'Admin',
+          createdAt: serverTimestamp()
+        });
       }
       setShowAddAgendaModal(false);
       setEditingAgenda(null);
@@ -201,21 +241,26 @@ export default function App() {
   // ---- Filtered Agenda ----
   const filteredAgendas = agendas.filter(item => {
     const s = (agendaSearch || '').toLowerCase();
-    const matchSearch = !s || item.title.toLowerCase().includes(s) || item.responsible.toLowerCase().includes(s) || item.location.toLowerCase().includes(s);
+    const tgl = item.tanggal || item.date || '';
+    const nomSurat = item.nomorSurat || '';
+    const altSurat = item.alamatSurat || item.location || '';
+    const ket = item.keteranganIsiSurat || item.title || '';
+
+    const matchSearch = !s || nomSurat.toLowerCase().includes(s) || altSurat.toLowerCase().includes(s) || ket.toLowerCase().includes(s);
     const matchStatus = agendaStatusFilter === 'All' || item.status === agendaStatusFilter;
     let matchTab = true;
-    if (agendaTabFilter === 'today') matchTab = item.date === todayStr;
-    if (agendaTabFilter === 'upcoming') matchTab = item.date >= todayStr;
-    if (agendaTabFilter === 'archive') matchTab = item.date < todayStr || item.status === 'Selesai';
+    if (agendaTabFilter === 'today') matchTab = tgl === todayStr;
+    if (agendaTabFilter === 'upcoming') matchTab = tgl >= todayStr;
+    if (agendaTabFilter === 'archive') matchTab = tgl < todayStr || item.status === 'Selesai';
     return matchSearch && matchStatus && matchTab;
   });
 
   // ---- Stats ----
-  const totalToday = agendas.filter(a => a.date === todayStr).length;
-  const totalUpcoming = agendas.filter(a => a.date > todayStr).length;
+  const totalToday = agendas.filter(a => (a.tanggal || a.date || '') === todayStr).length;
+  const totalUpcoming = agendas.filter(a => (a.tanggal || a.date || '') > todayStr).length;
   const totalCompleted = agendas.filter(a => a.status === 'Selesai').length;
   const totalPending = agendas.filter(a => a.status === 'Proses').length;
-  const todayAgendas = agendas.filter(a => a.date === todayStr).sort((a, b) => a.time.localeCompare(b.time));
+  const todayAgendas = agendas.filter(a => (a.tanggal || a.date || '') === todayStr);
 
   // ================================================================
   // LOADING SCREEN
@@ -477,14 +522,14 @@ export default function App() {
                           <div className="timeline-content">
                             <div className="timeline-row">
                               <div>
-                                <div className="timeline-time">{item.time}{item.timeEnd ? ` - ${item.timeEnd} WIB` : ' WIB'}</div>
-                                <div className="timeline-title">{item.title}</div>
+                                <div className="timeline-time">No. Surat: {item.nomorSurat || '-'}</div>
+                                <div className="timeline-title">{item.keteranganIsiSurat || item.title || '-'}</div>
                               </div>
                               <span className={statusClass(item.status)}>{item.status.toUpperCase()}</span>
                             </div>
                             <div className="timeline-meta">
-                              <span><span className="material-symbols-outlined">location_on</span>{item.location}</span>
-                              <span><span className="material-symbols-outlined">person</span>{item.responsible}</span>
+                              <span><span className="material-symbols-outlined">markunread_mailbox</span>Tujuan/Pengirim: {item.alamatSurat || item.location || '-'}</span>
+                              <span><span className="material-symbols-outlined">calendar_today</span>{item.tanggal || item.date}</span>
                             </div>
                           </div>
                         </div>
@@ -524,13 +569,13 @@ export default function App() {
 
                   <div className="panel-card">
                     <h4>Agenda Mendatang</h4>
-                    {agendas.filter(a => a.date > todayStr).slice(0, 3).length === 0 ? (
+                    {agendas.filter(a => (a.tanggal || a.date || '') > todayStr).slice(0, 3).length === 0 ? (
                       <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '8px 0' }}>Tidak ada agenda mendatang.</div>
                     ) : (
-                      agendas.filter(a => a.date > todayStr).slice(0, 3).map(item => (
+                      agendas.filter(a => (a.tanggal || a.date || '') > todayStr).slice(0, 3).map(item => (
                         <div key={item.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f4ff' }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0d1c2e' }}>{item.title}</div>
-                          <div style={{ fontSize: 11, color: '#737686', marginTop: 2 }}>{item.date} · {item.time}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0d1c2e' }}>{item.keteranganIsiSurat || item.title || '-'}</div>
+                          <div style={{ fontSize: 11, color: '#737686', marginTop: 2 }}>{item.tanggal || item.date} · No: {item.nomorSurat || '-'}</div>
                         </div>
                       ))
                     )}
@@ -588,11 +633,11 @@ export default function App() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Tanggal & Waktu</th>
-                      <th>Nama Kegiatan</th>
-                      <th>Penanggung Jawab</th>
-                      <th>Lokasi</th>
-                      <th>Divisi</th>
+                      <th style={{ width: 60, textAlign: 'center' }}>No. Urut</th>
+                      <th>Nomor Surat</th>
+                      <th>Tanggal</th>
+                      <th>Alamat Surat</th>
+                      <th>Keterangan Isi Surat</th>
                       <th>Status</th>
                       <th style={{ textAlign: 'center' }}>Aksi</th>
                     </tr>
@@ -601,22 +646,26 @@ export default function App() {
                     {filteredAgendas.length === 0 ? (
                       <tr>
                         <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#737686' }}>
-                          Tidak ada agenda yang sesuai.
+                          Tidak ada agenda surat yang sesuai.
                         </td>
                       </tr>
-                    ) : filteredAgendas.map(agenda => (
+                    ) : filteredAgendas.map((agenda, index) => (
                       <tr key={agenda.id}>
-                        <td>
-                          <div className="td-primary">{agenda.date}</div>
-                          <div className="td-muted">{agenda.time}{agenda.timeEnd ? ` - ${agenda.timeEnd}` : ''} WIB</div>
+                        <td style={{ textAlign: 'center', fontWeight: 700, color: '#004ac6' }}>
+                          {agenda.nomorUrut || index + 1}
                         </td>
                         <td>
-                          <div className="td-primary">{agenda.title}</div>
-                          {agenda.description && <div className="td-muted" style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agenda.description}</div>}
+                          <div className="td-primary">{agenda.nomorSurat || '-'}</div>
                         </td>
-                        <td>{agenda.responsible}</td>
-                        <td>{agenda.location}</td>
-                        <td><span className="division-tag">{agenda.division}</span></td>
+                        <td>
+                          <div className="td-primary">{agenda.tanggal || agenda.date}</div>
+                        </td>
+                        <td>
+                          <div className="td-primary">{agenda.alamatSurat || agenda.location || '-'}</div>
+                        </td>
+                        <td>
+                          <div className="td-primary">{agenda.keteranganIsiSurat || agenda.title || '-'}</div>
+                        </td>
                         <td><span className={statusClass(agenda.status)}>{agenda.status}</span></td>
                         <td>
                           <div className="action-btns">
@@ -658,13 +707,13 @@ export default function App() {
                   {Array.from({ length: 31 }).map((_, i) => {
                     const dayNum = i + 1;
                     const dayStr = `2026-07-${String(dayNum).padStart(2, '0')}`;
-                    const dayAgendas = agendas.filter(a => a.date === dayStr);
+                    const dayAgendas = agendas.filter(a => (a.tanggal || a.date) === dayStr);
                     const isToday = dayStr === todayStr;
                     return (
                       <div key={dayNum} className="cal-cell" style={{ background: isToday ? '#eff4ff' : '#ffffff', border: isToday ? '1px solid #004ac6' : undefined }}>
                         <div className="cal-cell-num" style={{ color: isToday ? '#004ac6' : undefined, fontWeight: isToday ? 800 : undefined }}>{dayNum}</div>
                         {dayAgendas.slice(0, 2).map(item => (
-                          <div key={item.id} className="cal-event" title={item.title}>{item.time} {item.title}</div>
+                          <div key={item.id} className="cal-event" title={item.keteranganIsiSurat || item.title || ''}>{item.nomorSurat || item.keteranganIsiSurat || item.title}</div>
                         ))}
                         {dayAgendas.length > 2 && <div style={{ fontSize: 9, color: '#737686' }}>+{dayAgendas.length - 2} lagi</div>}
                       </div>
@@ -758,24 +807,24 @@ export default function App() {
                   <table className="kop-table">
                     <thead>
                       <tr>
-                        <th>No</th>
-                        <th>Tanggal & Waktu</th>
-                        <th>Nama Kegiatan</th>
-                        <th>Penanggung Jawab</th>
-                        <th>Lokasi</th>
+                        <th>No. Urut</th>
+                        <th>Nomor Surat</th>
+                        <th>Tanggal</th>
+                        <th>Alamat Surat</th>
+                        <th>Keterangan Isi Surat</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {agendas.length === 0 ? (
-                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 16, color: '#737686' }}>Belum ada agenda tercatat.</td></tr>
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 16, color: '#737686' }}>Belum ada agenda surat tercatat.</td></tr>
                       ) : agendas.map((item, idx) => (
                         <tr key={item.id}>
-                          <td style={{ textAlign: 'center' }}>{idx + 1}</td>
-                          <td>{item.date} ({item.time})</td>
-                          <td style={{ fontWeight: 700 }}>{item.title}</td>
-                          <td>{item.responsible}</td>
-                          <td>{item.location}</td>
+                          <td style={{ textAlign: 'center', fontWeight: 700 }}>{item.nomorUrut || idx + 1}</td>
+                          <td>{item.nomorSurat || '-'}</td>
+                          <td>{item.tanggal || item.date}</td>
+                          <td>{item.alamatSurat || item.location || '-'}</td>
+                          <td style={{ fontWeight: 700 }}>{item.keteranganIsiSurat || item.title || '-'}</td>
                           <td style={{ fontWeight: 700 }}>{item.status}</td>
                         </tr>
                       ))}
@@ -804,7 +853,7 @@ export default function App() {
         <div className="modal-overlay">
           <div className="modal-box">
             <div className="modal-header">
-              <h3>{editingAgenda ? 'Edit Agenda Kegiatan' : 'Tambah Agenda Kegiatan Baru'}</h3>
+              <h3>{editingAgenda ? 'Edit Agenda Surat' : 'Tambah Agenda Surat Baru'}</h3>
               <button className="modal-close-btn" onClick={() => { setShowAddAgendaModal(false); setEditingAgenda(null); }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -812,25 +861,60 @@ export default function App() {
             <form onSubmit={saveAgenda}>
               <div className="modal-body">
                 <div className="modal-form">
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>No. Urut (Auto Generate)</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={editingAgenda ? (editingAgenda.nomorUrut || 'Auto') : (agendas.length > 0 ? Math.max(...agendas.map(a => a.nomorUrut || 0)) + 1 : 1)}
+                        style={{ background: '#e2e8f0', cursor: 'not-allowed', color: '#434655', fontWeight: 700 }}
+                      />
+                    </div>
+                    <div className="modal-field">
+                      <label>Tanggal Surat / Agenda</label>
+                      <input
+                        type="date"
+                        required
+                        value={agendaForm.tanggal}
+                        onChange={e => setAgendaForm({ ...agendaForm, tanggal: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
                   <div className="modal-field">
-                    <label>Nama / Judul Kegiatan</label>
-                    <input type="text" required placeholder="Contoh: Rapat Koordinasi Keamanan" value={agendaForm.title} onChange={e => setAgendaForm({ ...agendaForm, title: e.target.value })} />
+                    <label>Nomor Surat</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: W3.PAS.PAS.12.UM.01.01-452"
+                      value={agendaForm.nomorSurat}
+                      onChange={e => setAgendaForm({ ...agendaForm, nomorSurat: e.target.value })}
+                    />
                   </div>
-                  <div className="modal-grid-2">
-                    <div className="modal-field">
-                      <label>Tanggal</label>
-                      <input type="date" required value={agendaForm.date} onChange={e => setAgendaForm({ ...agendaForm, date: e.target.value })} />
-                    </div>
-                    <div className="modal-field">
-                      <label>Waktu Mulai</label>
-                      <input type="time" required value={agendaForm.time} onChange={e => setAgendaForm({ ...agendaForm, time: e.target.value })} />
-                    </div>
+
+                  <div className="modal-field">
+                    <label>Alamat Surat (Pengirim / Tujuan)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Kanwil Kemenkumham Sumbar / Bupati Pesisir Selatan"
+                      value={agendaForm.alamatSurat}
+                      onChange={e => setAgendaForm({ ...agendaForm, alamatSurat: e.target.value })}
+                    />
                   </div>
+
+                  <div className="modal-field">
+                    <label>Keterangan Isi Surat</label>
+                    <textarea
+                      required
+                      placeholder="Tuliskan ringkasan / perihal isi surat secara jelas..."
+                      value={agendaForm.keteranganIsiSurat}
+                      onChange={e => setAgendaForm({ ...agendaForm, keteranganIsiSurat: e.target.value })}
+                    ></textarea>
+                  </div>
+
                   <div className="modal-grid-2">
-                    <div className="modal-field">
-                      <label>Lokasi</label>
-                      <input type="text" required placeholder="Lokasi kegiatan" value={agendaForm.location} onChange={e => setAgendaForm({ ...agendaForm, location: e.target.value })} />
-                    </div>
                     <div className="modal-field">
                       <label>Divisi / Seksi</label>
                       <select value={agendaForm.division} onChange={e => setAgendaForm({ ...agendaForm, division: e.target.value })}>
@@ -841,14 +925,8 @@ export default function App() {
                         <option>Umum</option>
                       </select>
                     </div>
-                  </div>
-                  <div className="modal-grid-2">
                     <div className="modal-field">
-                      <label>Penanggung Jawab</label>
-                      <input type="text" required placeholder="Nama petugas" value={agendaForm.responsible} onChange={e => setAgendaForm({ ...agendaForm, responsible: e.target.value })} />
-                    </div>
-                    <div className="modal-field">
-                      <label>Status</label>
+                      <label>Status Agenda</label>
                       <select value={agendaForm.status} onChange={e => setAgendaForm({ ...agendaForm, status: e.target.value as Agenda['status'] })}>
                         <option value="Mendatang">Mendatang</option>
                         <option value="Proses">Proses</option>
@@ -856,10 +934,6 @@ export default function App() {
                         <option value="Penting">Penting</option>
                       </select>
                     </div>
-                  </div>
-                  <div className="modal-field">
-                    <label>Keterangan (Opsional)</label>
-                    <textarea placeholder="Catatan rincian kegiatan..." value={agendaForm.description} onChange={e => setAgendaForm({ ...agendaForm, description: e.target.value })}></textarea>
                   </div>
                 </div>
               </div>
