@@ -1,8 +1,8 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBYpKQmRMlbASYnRP92UuylmaNDuj-jREM",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "agenda-lapas.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "agenda-lapas",
@@ -12,8 +12,16 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-ZQJP27W97T"
 };
 
-// Initialize Firebase
+// Initialize Firebase - primary app
 const app = initializeApp(firebaseConfig);
+
+// Secondary app instance (used for creating new users without signing out the admin)
+const SECONDARY_APP_NAME = 'secondaryApp';
+export const getSecondaryAuth = () => {
+  const secondaryApp = getApps().find(a => a.name === SECONDARY_APP_NAME)
+    || initializeApp(firebaseConfig, SECONDARY_APP_NAME);
+  return getAuth(secondaryApp);
+};
 
 // Export Firebase Services
 export const auth = getAuth(app);

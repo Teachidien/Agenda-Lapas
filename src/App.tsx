@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
@@ -15,7 +16,7 @@ import {
   orderBy,
   serverTimestamp
 } from 'firebase/firestore';
-import { auth, db } from './services/firebase';
+import { auth, db, getSecondaryAuth } from './services/firebase';
 import './App.css';
 
 // ---- TIPE DATA ----
@@ -35,7 +36,7 @@ interface Agenda {
   timeEnd?: string;
   responsible?: string;
   division?: string;
-  status: 'Proses' | 'Selesai' | 'Mendatang' | 'Penting';
+  status?: string;
   createdAt?: any;
 }
 
@@ -53,23 +54,10 @@ interface Officer {
 const todayStr = new Date().toISOString().split('T')[0];
 const todayDisplay = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 
-const statusClass = (status: string) => {
-  if (status === 'Selesai') return 'status-badge status-selesai';
-  if (status === 'Proses') return 'status-badge status-proses';
-  if (status === 'Penting') return 'status-badge status-penting';
-  return 'status-badge status-mendatang';
-};
-
-const dotClass = (status: string) => {
-  if (status === 'Selesai') return 'timeline-dot done';
-  if (status === 'Proses') return 'timeline-dot active';
-  return 'timeline-dot';
-};
-
-const dotIcon = (status: string) => {
-  if (status === 'Selesai') return 'check';
-  if (status === 'Proses') return 'radio_button_checked';
-  return 'radio_button_unchecked';
+const divisionColor = (div: string) => {
+  if (div === 'KPR') return 'division-tag tag-kpr';
+  if (div === 'Pengelolaan') return 'division-tag tag-pengelolaan';
+  return 'division-tag tag-pelayan';
 };
 
 // ================================================================
@@ -95,7 +83,6 @@ export default function App() {
 
   // --- Agenda Filters ---
   const [agendaSearch, setAgendaSearch] = useState('');
-  const [agendaStatusFilter, setAgendaStatusFilter] = useState('All');
   const [agendaTabFilter, setAgendaTabFilter] = useState<'all' | 'today' | 'upcoming' | 'archive'>('all');
 
   // --- Modals ---
@@ -109,13 +96,13 @@ export default function App() {
     tanggal: todayStr,
     alamatSurat: '',
     keteranganIsiSurat: '',
-    division: 'Kamtib',
-    status: 'Mendatang' as Agenda['status']
+    division: 'KPR'
   };
   const [agendaForm, setAgendaForm] = useState(emptyAgendaForm);
 
   // --- User Form ---
-  const [userForm, setUserForm] = useState({ username: '', name: '', nip: '', division: 'Kamtib', role: 'Petugas' as Officer['role'] });
+  const [userForm, setUserForm] = useState({ username: '', name: '', nip: '', division: 'KPR', role: 'Petugas' as Officer['role'], password: '' });
+  const [userCreateLoading, setUserCreateLoading] = useState(false);
 
   // ---- Firebase Listeners ----
   useEffect(() => {
@@ -177,8 +164,7 @@ export default function App() {
       tanggal: a.tanggal || a.date || todayStr,
       alamatSurat: a.alamatSurat || a.location || '',
       keteranganIsiSurat: a.keteranganIsiSurat || a.title || a.description || '',
-      division: a.division || 'Kamtib',
-      status: a.status || 'Mendatang'
+      division: a.division || 'Kamtib'
     });
     setShowAddAgendaModal(true);
   };
@@ -195,8 +181,7 @@ export default function App() {
           location: agendaForm.alamatSurat, // sync legacy location
           keteranganIsiSurat: agendaForm.keteranganIsiSurat,
           title: agendaForm.keteranganIsiSurat, // sync legacy title
-          division: agendaForm.division,
-          status: agendaForm.status
+          division: agendaForm.division
         });
       } else {
         // Auto generate Nomor Urut
@@ -211,7 +196,6 @@ export default function App() {
           keteranganIsiSurat: agendaForm.keteranganIsiSurat,
           title: agendaForm.keteranganIsiSurat,
           division: agendaForm.division,
-          status: agendaForm.status,
           responsible: currentUser?.email?.split('@')[0] || 'Admin',
           createdAt: serverTimestamp()
         });
@@ -230,12 +214,43 @@ export default function App() {
   // ---- CRUD Officers ----
   const saveOfficer = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userForm.password || userForm.password.length < 6) {
+      alert('Password minimal 6 karakter!');
+      return;
+    }
+    setUserCreateLoading(true);
     try {
-      await addDoc(collection(db, 'officers'), { ...userForm, status: 'Aktif', createdAt: serverTimestamp() });
+      // 1. Buat akun Firebase Auth menggunakan secondary app (tidak mengganggu sesi Admin)
+      const secondaryAuth = getSecondaryAuth();
+      const email = `${userForm.username}@sinora.internal`;
+      await createUserWithEmailAndPassword(secondaryAuth, email, userForm.password);
+      // Sign out dari secondary app agar tidak ada konflik
+      await secondaryAuth.signOut();
+
+      // 2. Simpan profil petugas ke Firestore
+      await addDoc(collection(db, 'officers'), {
+        username: userForm.username,
+        name: userForm.name,
+        nip: userForm.nip,
+        division: userForm.division,
+        role: userForm.role,
+        email: email,
+        status: 'Aktif',
+        createdAt: serverTimestamp()
+      });
+
       setShowAddUserModal(false);
-      setUserForm({ username: '', name: '', nip: '', division: 'Kamtib', role: 'Petugas' });
-      alert(`Akun petugas ${userForm.username} berhasil ditambahkan ke daftar.`);
-    } catch (err: any) { alert('Gagal menambah akun: ' + err.message); }
+      setUserForm({ username: '', name: '', nip: '', division: 'KPR', role: 'Petugas', password: '' });
+      alert(`✅ Akun petugas "${userForm.username}" berhasil dibuat!\nEmail login: ${email}`);
+    } catch (err: any) {
+      if (err.code === 'auth/email-already-in-use') {
+        alert('❌ Username sudah dipakai. Coba username lain.');
+      } else {
+        alert('❌ Gagal membuat akun: ' + err.message);
+      }
+    } finally {
+      setUserCreateLoading(false);
+    }
   };
 
   // ---- Filtered Agenda ----
@@ -247,19 +262,18 @@ export default function App() {
     const ket = item.keteranganIsiSurat || item.title || '';
 
     const matchSearch = !s || nomSurat.toLowerCase().includes(s) || altSurat.toLowerCase().includes(s) || ket.toLowerCase().includes(s);
-    const matchStatus = agendaStatusFilter === 'All' || item.status === agendaStatusFilter;
     let matchTab = true;
     if (agendaTabFilter === 'today') matchTab = tgl === todayStr;
     if (agendaTabFilter === 'upcoming') matchTab = tgl >= todayStr;
-    if (agendaTabFilter === 'archive') matchTab = tgl < todayStr || item.status === 'Selesai';
-    return matchSearch && matchStatus && matchTab;
+    if (agendaTabFilter === 'archive') matchTab = tgl < todayStr;
+    return matchSearch && matchTab;
   });
 
   // ---- Stats ----
   const totalToday = agendas.filter(a => (a.tanggal || a.date || '') === todayStr).length;
   const totalUpcoming = agendas.filter(a => (a.tanggal || a.date || '') > todayStr).length;
-  const totalCompleted = agendas.filter(a => a.status === 'Selesai').length;
-  const totalPending = agendas.filter(a => a.status === 'Proses').length;
+  const totalSurat = agendas.length;
+  const totalPetugas = officers.length;
   const todayAgendas = agendas.filter(a => (a.tanggal || a.date || '') === todayStr);
 
   // ================================================================
@@ -473,24 +487,24 @@ export default function App() {
               {/* Stats Cards */}
               <div className="stats-grid">
                 <div className="stat-card blue">
-                  <div className="stat-label">Total Agenda Hari Ini</div>
+                  <div className="stat-label">Agenda / Surat Hari Ini</div>
                   <div className="stat-number">{String(totalToday).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">schedule</span>{totalToday} sedang berjalan</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">schedule</span>{totalToday} agenda tercatat hari ini</div>
                 </div>
                 <div className="stat-card indigo">
                   <div className="stat-label">Agenda Mendatang</div>
                   <div className="stat-number">{String(totalUpcoming).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">event</span>Hingga akhir pekan</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">event</span>Surat / agenda akan datang</div>
                 </div>
                 <div className="stat-card green">
-                  <div className="stat-label">Kegiatan Selesai</div>
-                  <div className="stat-number">{String(totalCompleted).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">check_circle</span>Bulan ini</div>
+                  <div className="stat-label">Total Seluruh Surat</div>
+                  <div className="stat-number">{String(totalSurat).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">mail</span>Tercatat dalam sistem</div>
                 </div>
                 <div className="stat-card amber">
-                  <div className="stat-label">Menunggu Persetujuan</div>
-                  <div className="stat-number">{String(totalPending).padStart(2, '0')}</div>
-                  <div className="stat-meta"><span className="material-symbols-outlined">pending</span>Perlu tindakan segera</div>
+                  <div className="stat-label">Total Petugas Aktif</div>
+                  <div className="stat-number">{String(totalPetugas).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">group</span>Terdaftar di sistem</div>
                 </div>
               </div>
 
@@ -514,8 +528,8 @@ export default function App() {
                       {todayAgendas.map((item) => (
                         <div key={item.id} className="timeline-item">
                           <div className="timeline-indicator">
-                            <div className={dotClass(item.status)}>
-                              <span className="material-symbols-outlined">{dotIcon(item.status)}</span>
+                            <div className="timeline-dot">
+                              <span className="material-symbols-outlined">mail</span>
                             </div>
                             <div className="timeline-line"></div>
                           </div>
@@ -525,7 +539,6 @@ export default function App() {
                                 <div className="timeline-time">No. Surat: {item.nomorSurat || '-'}</div>
                                 <div className="timeline-title">{item.keteranganIsiSurat || item.title || '-'}</div>
                               </div>
-                              <span className={statusClass(item.status)}>{item.status.toUpperCase()}</span>
                             </div>
                             <div className="timeline-meta">
                               <span><span className="material-symbols-outlined">markunread_mailbox</span>Tujuan/Pengirim: {item.alamatSurat || item.location || '-'}</span>
@@ -609,13 +622,6 @@ export default function App() {
                     onChange={e => setAgendaSearch(e.target.value)}
                   />
                 </div>
-                <select className="filter-select" value={agendaStatusFilter} onChange={e => setAgendaStatusFilter(e.target.value)}>
-                  <option value="All">Semua Status</option>
-                  <option value="Proses">Proses</option>
-                  <option value="Selesai">Selesai</option>
-                  <option value="Mendatang">Mendatang</option>
-                  <option value="Penting">Penting</option>
-                </select>
                 <div className="tab-group">
                   {[
                     { key: 'all', label: 'Semua' },
@@ -638,7 +644,7 @@ export default function App() {
                       <th>Tanggal</th>
                       <th>Alamat Surat</th>
                       <th>Keterangan Isi Surat</th>
-                      <th>Status</th>
+                      <th>Divisi</th>
                       <th style={{ textAlign: 'center' }}>Aksi</th>
                     </tr>
                   </thead>
@@ -666,7 +672,7 @@ export default function App() {
                         <td>
                           <div className="td-primary">{agenda.keteranganIsiSurat || agenda.title || '-'}</div>
                         </td>
-                        <td><span className={statusClass(agenda.status)}>{agenda.status}</span></td>
+                        <td><span className={divisionColor(agenda.division || '')}>{agenda.division || 'Umum'}</span></td>
                         <td>
                           <div className="action-btns">
                             <button className="action-btn edit" onClick={() => openEditModal(agenda)} title="Edit">
@@ -812,7 +818,7 @@ export default function App() {
                         <th>Tanggal</th>
                         <th>Alamat Surat</th>
                         <th>Keterangan Isi Surat</th>
-                        <th>Status</th>
+                        <th>Divisi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -825,7 +831,7 @@ export default function App() {
                           <td>{item.tanggal || item.date}</td>
                           <td>{item.alamatSurat || item.location || '-'}</td>
                           <td style={{ fontWeight: 700 }}>{item.keteranganIsiSurat || item.title || '-'}</td>
-                          <td style={{ fontWeight: 700 }}>{item.status}</td>
+                          <td>{item.division || 'Umum'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -914,26 +920,13 @@ export default function App() {
                     ></textarea>
                   </div>
 
-                  <div className="modal-grid-2">
-                    <div className="modal-field">
-                      <label>Divisi / Seksi</label>
-                      <select value={agendaForm.division} onChange={e => setAgendaForm({ ...agendaForm, division: e.target.value })}>
-                        <option>Kamtib</option>
-                        <option>Pembinaan</option>
-                        <option>Tata Usaha</option>
-                        <option>KPLP</option>
-                        <option>Umum</option>
-                      </select>
-                    </div>
-                    <div className="modal-field">
-                      <label>Status Agenda</label>
-                      <select value={agendaForm.status} onChange={e => setAgendaForm({ ...agendaForm, status: e.target.value as Agenda['status'] })}>
-                        <option value="Mendatang">Mendatang</option>
-                        <option value="Proses">Proses</option>
-                        <option value="Selesai">Selesai</option>
-                        <option value="Penting">Penting</option>
-                      </select>
-                    </div>
+                  <div className="modal-field">
+                    <label>Divisi / Seksi</label>
+                    <select value={agendaForm.division} onChange={e => setAgendaForm({ ...agendaForm, division: e.target.value })}>
+                      <option>KPR</option>
+                      <option>Pengelolaan</option>
+                      <option>Pelayan Tahanan</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -959,9 +952,15 @@ export default function App() {
             <form onSubmit={saveOfficer}>
               <div className="modal-body">
                 <div className="modal-form">
-                  <div className="modal-field">
-                    <label>Username / ID User</label>
-                    <input type="text" required placeholder="Contoh: petugas01" value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })} />
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Username (untuk login)</label>
+                      <input type="text" required placeholder="Contoh: budi.santoso" value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })} />
+                    </div>
+                    <div className="modal-field">
+                      <label>Password Login</label>
+                      <input type="password" required minLength={6} placeholder="Min. 6 karakter" value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })} />
+                    </div>
                   </div>
                   <div className="modal-field">
                     <label>Nama Lengkap</label>
@@ -975,11 +974,9 @@ export default function App() {
                     <div className="modal-field">
                       <label>Divisi</label>
                       <select value={userForm.division} onChange={e => setUserForm({ ...userForm, division: e.target.value })}>
-                        <option>Kamtib</option>
-                        <option>Pembinaan</option>
-                        <option>Tata Usaha</option>
-                        <option>KPLP</option>
-                        <option>Umum</option>
+                        <option>KPR</option>
+                        <option>Pengelolaan</option>
+                        <option>Pelayan Tahanan</option>
                       </select>
                     </div>
                     <div className="modal-field">
@@ -990,14 +987,17 @@ export default function App() {
                       </select>
                     </div>
                   </div>
-                  <div style={{ background: '#fff8e1', border: '1px solid #f59e0b', padding: '10px 14px', fontSize: 12, color: '#92400e' }}>
-                    <strong>Catatan:</strong> Setelah menambah data di sini, buat akun login di <strong>Firebase Console → Authentication → Add User</strong> dengan email <em>{userForm.username ? `${userForm.username}@sinora.internal` : '[username]@sinora.internal'}</em>
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#1e40af' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>info</span>
+                    <strong>Otomatis dibuat:</strong> Akun login dengan email <em>{userForm.username ? `${userForm.username}@sinora.internal` : '[username]@sinora.internal'}</em> akan langsung aktif setelah disimpan.
                   </div>
                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowAddUserModal(false)}>Batal</button>
-                <button type="submit" className="btn-save">Tambah Petugas</button>
+                <button type="submit" className="btn-save" disabled={userCreateLoading}>
+                  {userCreateLoading ? 'Membuat Akun...' : 'Buat Akun Petugas'}
+                </button>
               </div>
             </form>
           </div>
