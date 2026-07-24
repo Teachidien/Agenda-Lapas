@@ -364,15 +364,17 @@ function App() {
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#434655] mb-2" htmlFor="username">
                         ID User / Username / NIP
                       </label>
-                      <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#737686]">account_circle</span>
+                      <div style={{position:'relative', display:'flex', alignItems:'center'}}>
+                        <span className="material-symbols-outlined" style={{position:'absolute', left:'10px', fontSize:'18px', color:'#737686', pointerEvents:'none', lineHeight:1}}>account_circle</span>
                         <input
                           id="username"
                           type="text"
-                          className="w-full bg-[#f8f9ff] border border-[#c3c6d7] focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 rounded-lg py-2.5 pl-10 pr-4 text-sm text-[#0d1c2e] outline-none transition"
+                          style={{width:'100%', background:'#f8f9ff', border:'1px solid #c3c6d7', borderRadius:'8px', padding:'10px 12px 10px 36px', fontSize:'14px', color:'#0d1c2e', outline:'none', transition:'border-color 0.2s'}}
                           placeholder="Masukkan ID (contoh: glubis)"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
+                          onFocus={(e) => e.currentTarget.style.borderColor='#004ac6'}
+                          onBlur={(e) => e.currentTarget.style.borderColor='#c3c6d7'}
                           required
                         />
                       </div>
@@ -382,15 +384,17 @@ function App() {
                       <label className="block text-xs font-bold uppercase tracking-wider text-[#434655] mb-2" htmlFor="password">
                         Password
                       </label>
-                      <div className="relative">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#737686]">lock</span>
+                      <div style={{position:'relative', display:'flex', alignItems:'center'}}>
+                        <span className="material-symbols-outlined" style={{position:'absolute', left:'10px', fontSize:'18px', color:'#737686', pointerEvents:'none', lineHeight:1}}>lock</span>
                         <input
                           id="password"
                           type="password"
-                          className="w-full bg-[#f8f9ff] border border-[#c3c6d7] focus:border-[#004ac6] focus:ring-2 focus:ring-[#004ac6]/20 rounded-lg py-2.5 pl-10 pr-4 text-sm text-[#0d1c2e] outline-none transition"
-                          placeholder="Masukkan Password (contoh: gilanglubis1)"
+                          style={{width:'100%', background:'#f8f9ff', border:'1px solid #c3c6d7', borderRadius:'8px', padding:'10px 12px 10px 36px', fontSize:'14px', color:'#0d1c2e', outline:'none', transition:'border-color 0.2s'}}
+                          placeholder="Masukkan Password Anda"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          onFocus={(e) => e.currentTarget.style.borderColor='#004ac6'}
+                          onBlur={(e) => e.currentTarget.style.borderColor='#c3c6d7'}
                           required
                         />
                       </div>
