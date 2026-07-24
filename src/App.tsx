@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp 
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 import { auth, db } from './services/firebase';
 import './App.css';
 
-// Tipe Data Agenda
+// ---- TIPE DATA ----
 interface Agenda {
   id: string;
   title: string;
   date: string;
   time: string;
+  timeEnd?: string;
   location: string;
   responsible: string;
   division: string;
@@ -33,1180 +34,902 @@ interface Agenda {
   createdAt?: any;
 }
 
-// Tipe Data Officer / User
 interface Officer {
   id: string;
   username: string;
   name: string;
-  nip: string;
+  nip?: string;
   division: string;
   role: 'Super Admin' | 'Admin' | 'Petugas';
   status: 'Aktif' | 'Nonaktif';
 }
 
-function App() {
-  // Auth state
+// ---- HELPERS ----
+const todayStr = new Date().toISOString().split('T')[0];
+const todayDisplay = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+
+const statusClass = (status: string) => {
+  if (status === 'Selesai') return 'status-badge status-selesai';
+  if (status === 'Proses') return 'status-badge status-proses';
+  if (status === 'Penting') return 'status-badge status-penting';
+  return 'status-badge status-mendatang';
+};
+
+const dotClass = (status: string) => {
+  if (status === 'Selesai') return 'timeline-dot done';
+  if (status === 'Proses') return 'timeline-dot active';
+  return 'timeline-dot';
+};
+
+const dotIcon = (status: string) => {
+  if (status === 'Selesai') return 'check';
+  if (status === 'Proses') return 'radio_button_checked';
+  return 'radio_button_unchecked';
+};
+
+// ================================================================
+// MAIN APP
+// ================================================================
+export default function App() {
+  // --- Auth State ---
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  
-  // Login form state
+
+  // --- Login form ---
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // Navigation state: 'dashboard' | 'agenda' | 'calendar' | 'users' | 'reports'
+  // --- Navigation ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'agenda' | 'calendar' | 'users' | 'reports'>('dashboard');
 
-  // Realtime Data State
+  // --- Realtime Data ---
   const [agendas, setAgendas] = useState<Agenda[]>([]);
   const [officers, setOfficers] = useState<Officer[]>([]);
 
-  // Filter & Search State for Agenda
+  // --- Agenda Filters ---
   const [agendaSearch, setAgendaSearch] = useState('');
   const [agendaStatusFilter, setAgendaStatusFilter] = useState('All');
   const [agendaTabFilter, setAgendaTabFilter] = useState<'all' | 'today' | 'upcoming' | 'archive'>('all');
 
-  // Modals state
+  // --- Modals ---
   const [showAddAgendaModal, setShowAddAgendaModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingAgenda, setEditingAgenda] = useState<Agenda | null>(null);
 
-  // Form State Tambah/Edit Agenda
-  const [agendaForm, setAgendaForm] = useState({
-    title: '',
-    date: new Date().toISOString().split('T')[0],
-    time: '09:00',
-    location: 'Aula Lapas Painan',
-    responsible: 'Gilang Lubis (Super Admin)',
-    division: 'Kamtib',
-    category: 'Rapat Internal',
-    status: 'Proses' as 'Proses' | 'Selesai' | 'Mendatang' | 'Penting',
-    description: ''
-  });
+  // --- Agenda Form ---
+  const emptyAgendaForm = {
+    title: '', date: todayStr, time: '08:00', timeEnd: '09:00',
+    location: 'Aula Lapas Painan', responsible: '', division: 'Kamtib',
+    category: 'Rapat Internal', status: 'Mendatang' as Agenda['status'], description: ''
+  };
+  const [agendaForm, setAgendaForm] = useState(emptyAgendaForm);
 
-  // Form State Tambah User Baru
-  const [userForm, setUserForm] = useState({
-    username: '',
-    name: '',
-    nip: '',
-    division: 'Kamtib',
-    role: 'Petugas' as 'Super Admin' | 'Admin' | 'Petugas',
-    password: ''
-  });
+  // --- User Form ---
+  const [userForm, setUserForm] = useState({ username: '', name: '', nip: '', division: 'Kamtib', role: 'Petugas' as Officer['role'] });
 
-  // Listener Auth Firebase
+  // ---- Firebase Listeners ----
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
+    const unsub = onAuthStateChanged(auth, (user) => { setCurrentUser(user); setAuthLoading(false); });
+    return () => unsub();
   }, []);
 
-  // Listener Realtime Firestore Agendas
   useEffect(() => {
     if (!currentUser) return;
-    const q = query(collection(db, 'agendas'), orderBy('date', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Agenda[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Agenda[];
-      setAgendas(data);
+    const q = query(collection(db, 'agendas'), orderBy('date', 'asc'));
+    const unsub = onSnapshot(q, (snap) => {
+      setAgendas(snap.docs.map(d => ({ id: d.id, ...d.data() } as Agenda)));
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, [currentUser]);
 
-  // Listener Realtime Firestore Officers / Users
   useEffect(() => {
     if (!currentUser) return;
     const q = query(collection(db, 'officers'), orderBy('username', 'asc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Officer[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Officer[];
-      setOfficers(data);
+    const unsub = onSnapshot(q, (snap) => {
+      setOfficers(snap.docs.map(d => ({ id: d.id, ...d.data() } as Officer)));
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, [currentUser]);
 
-  // Handle Login Super Admin / User
+  // ---- Auth Actions ----
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setLoginLoading(true);
-
-    // Format username ke dummy email @sinora.internal
-    const formattedEmail = username.includes('@') 
-      ? username 
-      : `${username.trim()}@sinora.internal`;
-
+    const email = username.includes('@') ? username : `${username.trim()}@sinora.internal`;
     try {
-      await signInWithEmailAndPassword(auth, formattedEmail, password);
-      setUsername('');
-      setPassword('');
+      await signInWithEmailAndPassword(auth, email, password);
+      setUsername(''); setPassword('');
     } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setLoginError('ID User / Username atau Password salah!');
+      const code = err.code;
+      if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
+        setLoginError('ID User atau Password tidak valid. Silakan coba lagi.');
       } else {
-        setLoginError('Gagal masuk: ' + err.message);
+        setLoginError('Terjadi kesalahan: ' + err.message);
       }
     } finally {
       setLoginLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err: any) {
-      console.error('Logout error:', err);
-    }
-  };
+  const handleLogout = async () => { try { await signOut(auth); } catch {/* ignore */} };
 
-  // CRUD Agenda Actions
-  const handleSaveAgenda = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingAgenda) {
-        // Edit Agenda
-        const docRef = doc(db, 'agendas', editingAgenda.id);
-        await updateDoc(docRef, { ...agendaForm });
-        setEditingAgenda(null);
-      } else {
-        // Tambah Agenda Baru
-        await addDoc(collection(db, 'agendas'), {
-          ...agendaForm,
-          createdAt: serverTimestamp()
-        });
-      }
-      setShowAddAgendaModal(false);
-      setAgendaForm({
-        title: '',
-        date: new Date().toISOString().split('T')[0],
-        time: '09:00',
-        location: 'Aula Lapas Painan',
-        responsible: currentUser?.displayName || 'Super Admin',
-        division: 'Kamtib',
-        category: 'Rapat Internal',
-        status: 'Proses',
-        description: ''
-      });
-    } catch (err: any) {
-      alert('Gagal menyimpan agenda: ' + err.message);
-    }
+  // ---- CRUD Agenda ----
+  const openAddModal = () => {
+    setEditingAgenda(null);
+    setAgendaForm({ ...emptyAgendaForm, responsible: currentUser?.email?.split('@')[0] || '' });
+    setShowAddAgendaModal(true);
   };
-
-  const handleDeleteAgenda = async (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus agenda ini?')) {
-      try {
-        await deleteDoc(doc(db, 'agendas', id));
-      } catch (err: any) {
-        alert('Gagal menghapus agenda: ' + err.message);
-      }
-    }
-  };
-
-  const handleOpenEditAgenda = (agenda: Agenda) => {
-    setEditingAgenda(agenda);
-    setAgendaForm({
-      title: agenda.title,
-      date: agenda.date,
-      time: agenda.time,
-      location: agenda.location,
-      responsible: agenda.responsible,
-      division: agenda.division,
-      category: agenda.category,
-      status: agenda.status,
-      description: agenda.description || ''
-    });
+  const openEditModal = (a: Agenda) => {
+    setEditingAgenda(a);
+    setAgendaForm({ title: a.title, date: a.date, time: a.time, timeEnd: a.timeEnd || '', location: a.location, responsible: a.responsible, division: a.division, category: a.category, status: a.status, description: a.description || '' });
     setShowAddAgendaModal(true);
   };
 
-  // CRUD User / Officer Actions (Admin Only)
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const saveAgenda = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Simpan data officer ke Firestore
-      await addDoc(collection(db, 'officers'), {
-        username: userForm.username.trim(),
-        name: userForm.name,
-        nip: userForm.nip,
-        division: userForm.division,
-        role: userForm.role,
-        status: 'Aktif',
-        createdAt: serverTimestamp()
-      });
+      if (editingAgenda) {
+        await updateDoc(doc(db, 'agendas', editingAgenda.id), { ...agendaForm });
+      } else {
+        await addDoc(collection(db, 'agendas'), { ...agendaForm, createdAt: serverTimestamp() });
+      }
+      setShowAddAgendaModal(false);
+      setEditingAgenda(null);
+    } catch (err: any) { alert('Gagal menyimpan: ' + err.message); }
+  };
 
-      alert(`Akun Petugas (${userForm.username}) berhasil ditambahkan ke daftar!`);
-      setShowAddUserModal(false);
-      setUserForm({ username: '', name: '', nip: '', division: 'Kamtib', role: 'Petugas', password: '' });
-    } catch (err: any) {
-      alert('Gagal membuat akun: ' + err.message);
+  const deleteAgenda = async (id: string) => {
+    if (window.confirm('Hapus agenda ini?')) {
+      try { await deleteDoc(doc(db, 'agendas', id)); } catch (err: any) { alert('Gagal menghapus: ' + err.message); }
     }
   };
 
-  // Filter Agenda Data
-  const todayStr = new Date().toISOString().split('T')[0];
-  const filteredAgendas = agendas.filter((item) => {
-    const matchSearch = item.title.toLowerCase().includes(agendaSearch.toLowerCase()) || 
-                        item.responsible.toLowerCase().includes(agendaSearch.toLowerCase()) ||
-                        item.location.toLowerCase().includes(agendaSearch.toLowerCase());
+  // ---- CRUD Officers ----
+  const saveOfficer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addDoc(collection(db, 'officers'), { ...userForm, status: 'Aktif', createdAt: serverTimestamp() });
+      setShowAddUserModal(false);
+      setUserForm({ username: '', name: '', nip: '', division: 'Kamtib', role: 'Petugas' });
+      alert(`Akun petugas ${userForm.username} berhasil ditambahkan ke daftar.`);
+    } catch (err: any) { alert('Gagal menambah akun: ' + err.message); }
+  };
+
+  // ---- Filtered Agenda ----
+  const filteredAgendas = agendas.filter(item => {
+    const s = (agendaSearch || '').toLowerCase();
+    const matchSearch = !s || item.title.toLowerCase().includes(s) || item.responsible.toLowerCase().includes(s) || item.location.toLowerCase().includes(s);
     const matchStatus = agendaStatusFilter === 'All' || item.status === agendaStatusFilter;
-    
     let matchTab = true;
     if (agendaTabFilter === 'today') matchTab = item.date === todayStr;
-    if (agendaTabFilter === 'upcoming') matchTab = item.date > todayStr;
+    if (agendaTabFilter === 'upcoming') matchTab = item.date >= todayStr;
     if (agendaTabFilter === 'archive') matchTab = item.date < todayStr || item.status === 'Selesai';
-
     return matchSearch && matchStatus && matchTab;
   });
 
-  // Calculate Dashboard Stats
+  // ---- Stats ----
   const totalToday = agendas.filter(a => a.date === todayStr).length;
   const totalUpcoming = agendas.filter(a => a.date > todayStr).length;
   const totalCompleted = agendas.filter(a => a.status === 'Selesai').length;
   const totalPending = agendas.filter(a => a.status === 'Proses').length;
+  const todayAgendas = agendas.filter(a => a.date === todayStr).sort((a, b) => a.time.localeCompare(b.time));
 
+  // ================================================================
+  // LOADING SCREEN
+  // ================================================================
   if (authLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8f9ff]">
-        <div className="text-center">
-          <span className="material-symbols-outlined animate-spin text-4xl text-[#004ac6]">sync</span>
-          <p className="mt-2 text-sm text-[#737686]">Memuat Sistem SINORA...</p>
+      <div className="loading-screen">
+        <div style={{ textAlign: 'center' }}>
+          <span className="material-symbols-outlined spin">sync</span>
+          <p style={{ fontSize: 14, color: '#737686', marginTop: 8 }}>Memuat Sistem SINORA...</p>
         </div>
       </div>
     );
   }
 
-  // JIKA USER BELUM LOGIN -> TAMPILKAN LOGIN PAGE (Desain dari Rancangan UI)
+  // ================================================================
+  // LOGIN PAGE
+  // ================================================================
   if (!currentUser) {
     return (
-      <div className="min-h-screen asymmetric-bg flex flex-col justify-between p-4 sm:p-6 md:p-10 text-[#0d1c2e]">
-        {/* Header Branding */}
-        <header className="flex justify-between items-center max-w-7xl mx-auto w-full">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#004ac6] flex items-center justify-center rounded-lg shadow-sm">
-              <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
-            </div>
-            <div>
-              <h1 className="font-extrabold text-xl text-[#004ac6] leading-none">SINORA</h1>
-              <p className="text-[10px] font-bold text-[#737686] uppercase tracking-widest">Lapas Kelas IIB Painan</p>
-            </div>
+      <div className="login-page">
+        <div className="login-container">
+          {/* Card Utama */}
+          <div className="login-card">
+            {/* Header: Logo + Judul */}
+            <header className="login-header">
+              <div className="login-logo-box">
+                <span className="material-symbols-outlined">shield</span>
+              </div>
+              <div>
+                <h1 className="login-title">SINORA</h1>
+                <p className="login-subtitle">Agenda System</p>
+              </div>
+            </header>
+
+            {/* Form Login */}
+            <form className="login-form" onSubmit={handleLogin}>
+              {loginError && (
+                <div className="login-error">
+                  <span className="material-symbols-outlined">error</span>
+                  {loginError}
+                </div>
+              )}
+
+              <div className="form-field">
+                <label className="form-label" htmlFor="username">ID USER / NIP</label>
+                <div className="input-group">
+                  <span className="material-symbols-outlined">badge</span>
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="Masukkan NIP Anda"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+              </div>
+
+              <div className="form-field">
+                <label className="form-label" htmlFor="password">PASSWORD</label>
+                <div className="input-group">
+                  <span className="material-symbols-outlined">lock</span>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="login-btn" disabled={loginLoading}>
+                {loginLoading ? (
+                  <>
+                    <span className="material-symbols-outlined spin" style={{ fontSize: 18 }}>sync</span>
+                    MEMPROSES...
+                  </>
+                ) : (
+                  <>
+                    MASUK SISTEM
+                    <span className="material-symbols-outlined" style={{ fontSize: 20 }}>login</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Footer Info */}
+            <footer className="login-footer">
+              <div className="login-info">
+                <span className="material-symbols-outlined">info</span>
+                <p>Akses terbatas khusus akun resmi bentukan Admin. Harap hubungi bagian TI jika Anda mengalami kendala saat login.</p>
+              </div>
+            </footer>
           </div>
-          <span className="bg-[#e6eeff] text-[#004ac6] text-xs font-semibold px-3 py-1 rounded-full border border-[#b4c5ff]">
-            v2.4 Official
-          </span>
-        </header>
 
-        {/* Main Grid Container */}
-        <main className="max-w-7xl mx-auto w-full my-auto py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
-            {/* Left Column: Branding / Context */}
-            <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 bg-[#d5e3fc] text-[#003ea8] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">
-                <span className="material-symbols-outlined text-sm">security</span>
-                Sistem Agenda Resmi
-              </div>
-              
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0d1c2e] leading-tight tracking-tight">
-                Manajemen Agenda & Kegiatan Terintegrasi
-              </h2>
-              
-              <p className="text-base sm:text-lg text-[#434655] max-w-2xl leading-relaxed">
-                Aplikasi resmi Lembaga Pemasyarakatan Kelas IIB Painan untuk penjadwalan kegiatan, pengawasan tugas petugas, dan dokumentasi agenda institusi.
-              </p>
-
-              {/* Asymmetric Informational Pillars */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                <div className="bg-white p-4 rounded-lg border-l-4 border-[#004ac6] shadow-sm">
-                  <span className="material-symbols-outlined text-[#004ac6] mb-1">lock</span>
-                  <h4 className="font-bold text-sm">Akses Terbatas</h4>
-                  <p className="text-xs text-[#737686] mt-1">Khusus akun resmi yang telah dibuat oleh Admin.</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg border-l-4 border-[#2563eb] shadow-sm">
-                  <span className="material-symbols-outlined text-[#2563eb] mb-1">speed</span>
-                  <h4 className="font-bold text-sm">Real-time Sync</h4>
-                  <p className="text-xs text-[#737686] mt-1">Agenda terupdate secara langsung di seluruh divisi.</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg border-l-4 border-[#4059aa] shadow-sm">
-                  <span className="material-symbols-outlined text-[#4059aa] mb-1">verified</span>
-                  <h4 className="font-bold text-sm">Dokumentasi</h4>
-                  <p className="text-xs text-[#737686] mt-1">Arsip dan laporan agenda tercatat dengan sistematis.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Asymmetric Login Form */}
-            <div className="lg:col-span-5">
-              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl border border-[#c3c6d7] relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#e6eeff] rounded-bl-full -z-0 pointer-events-none"></div>
-
-                <div className="relative z-10">
-                  <div className="mb-6">
-                    <h3 className="text-2xl font-bold text-[#0d1c2e]">Masuk Aplikasi</h3>
-                    <p className="text-xs text-[#737686] mt-1">Silakan masukkan ID User dan Password Anda.</p>
-                  </div>
-
-                  {loginError && (
-                    <div className="mb-4 bg-[#ffdad6] border border-[#ba1a1a] text-[#93000a] text-xs p-3 rounded-lg flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">error</span>
-                      {loginError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#434655] mb-2" htmlFor="username">
-                        ID User / Username / NIP
-                      </label>
-                      <div style={{position:'relative', display:'flex', alignItems:'center'}}>
-                        <span className="material-symbols-outlined" style={{position:'absolute', left:'10px', fontSize:'18px', color:'#737686', pointerEvents:'none', lineHeight:1}}>account_circle</span>
-                        <input
-                          id="username"
-                          type="text"
-                          style={{width:'100%', background:'#f8f9ff', border:'1px solid #c3c6d7', borderRadius:'8px', padding:'10px 12px 10px 36px', fontSize:'14px', color:'#0d1c2e', outline:'none', transition:'border-color 0.2s'}}
-                          placeholder="Masukkan ID (contoh: glubis)"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          onFocus={(e) => e.currentTarget.style.borderColor='#004ac6'}
-                          onBlur={(e) => e.currentTarget.style.borderColor='#c3c6d7'}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-[#434655] mb-2" htmlFor="password">
-                        Password
-                      </label>
-                      <div style={{position:'relative', display:'flex', alignItems:'center'}}>
-                        <span className="material-symbols-outlined" style={{position:'absolute', left:'10px', fontSize:'18px', color:'#737686', pointerEvents:'none', lineHeight:1}}>lock</span>
-                        <input
-                          id="password"
-                          type="password"
-                          style={{width:'100%', background:'#f8f9ff', border:'1px solid #c3c6d7', borderRadius:'8px', padding:'10px 12px 10px 36px', fontSize:'14px', color:'#0d1c2e', outline:'none', transition:'border-color 0.2s'}}
-                          placeholder="Masukkan Password Anda"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          onFocus={(e) => e.currentTarget.style.borderColor='#004ac6'}
-                          onBlur={(e) => e.currentTarget.style.borderColor='#c3c6d7'}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loginLoading}
-                      className="w-full bg-[#004ac6] hover:bg-[#003ea8] text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 text-sm mt-6"
-                    >
-                      {loginLoading ? (
-                        <>
-                          <span className="material-symbols-outlined animate-spin text-sm">sync</span>
-                          Memverifikasi...
-                        </>
-                      ) : (
-                        <>
-                          <span>Masuk Sistem</span>
-                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  <div className="mt-6 pt-4 border-t border-[#e6eeff] text-center">
-                    <p className="text-[11px] text-[#737686]">
-                      Lupa password atau butuh bantuan akun? Hubungi <strong className="text-[#004ac6]">Admin IT Lapas Painan</strong>.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          {/* Divider Bawah */}
+          <div className="login-divider">
+            <hr /><span>Lapas Painan</span><hr />
           </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="max-w-7xl mx-auto w-full text-center text-xs text-[#737686] py-4">
-          &copy; 2026 Lembaga Pemasyarakatan Kelas IIB Painan. Hak Cipta Dilindungi.
-        </footer>
+        </div>
       </div>
     );
   }
 
-  // JIKA USER SUDAH LOGIN -> TAMPILKAN DASHBOARD UTAMA
+  // ================================================================
+  // DASHBOARD UTAMA (Setelah Login)
+  // ================================================================
+  const userDisplayName = currentUser.email?.split('@')[0] || 'Admin';
+
   return (
-    <div className="min-h-screen bg-[#f8f9ff] text-[#0d1c2e] flex">
-      {/* Sidebar Navigation (Sesuai Rancangan UI) */}
-      <aside className="fixed left-0 top-0 h-full w-[260px] bg-white border-r border-[#c3c6d7] z-40 flex flex-col justify-between">
-        <div>
-          {/* Logo & Header Sidebar */}
-          <div className="p-6 border-b border-[#eff4ff]">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#004ac6] flex items-center justify-center rounded-lg text-white font-bold">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
-              </div>
-              <div>
-                <h1 className="font-extrabold text-lg text-[#004ac6] leading-none">SINORA</h1>
-                <p className="text-[10px] font-bold text-[#737686] uppercase tracking-wider mt-0.5">Lapas Painan</p>
-              </div>
-            </div>
+    <div className="app-layout">
+      {/* ==================== SIDEBAR ==================== */}
+      <aside className="sidebar">
+        {/* Brand */}
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">
+            <span className="material-symbols-outlined">shield</span>
           </div>
-
-          {/* Navigation Links */}
-          <nav className="p-4 space-y-1.5">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'dashboard'
-                  ? 'bg-[#e6eeff] text-[#004ac6] border-l-4 border-[#004ac6]'
-                  : 'text-[#434655] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              <span>Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('agenda')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'agenda'
-                  ? 'bg-[#e6eeff] text-[#004ac6] border-l-4 border-[#004ac6]'
-                  : 'text-[#434655] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined">event_note</span>
-              <span>Manajemen Agenda</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'calendar'
-                  ? 'bg-[#e6eeff] text-[#004ac6] border-l-4 border-[#004ac6]'
-                  : 'text-[#434655] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined">calendar_month</span>
-              <span>Kalender Agenda</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'users'
-                  ? 'bg-[#e6eeff] text-[#004ac6] border-l-4 border-[#004ac6]'
-                  : 'text-[#434655] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined">group</span>
-              <span>Manajemen User</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                activeTab === 'reports'
-                  ? 'bg-[#e6eeff] text-[#004ac6] border-l-4 border-[#004ac6]'
-                  : 'text-[#434655] hover:bg-[#eff4ff]'
-              }`}
-            >
-              <span className="material-symbols-outlined">description</span>
-              <span>Laporan & Cetak</span>
-            </button>
-          </nav>
+          <div>
+            <div className="sidebar-brand-name">SINORA</div>
+            <div className="sidebar-brand-sub">Lapas Painan</div>
+          </div>
         </div>
 
-        {/* User Info & Logout at Sidebar Footer */}
-        <div className="p-4 border-t border-[#eff4ff] bg-[#f8f9ff]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-[#004ac6] text-white flex items-center justify-center text-xs font-bold">
-                {currentUser.email ? currentUser.email.charAt(0).toUpperCase() : 'A'}
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-bold text-[#0d1c2e] truncate">{currentUser.email?.split('@')[0]}</p>
-                <p className="text-[10px] text-[#737686] capitalize">Super Admin</p>
-              </div>
-            </div>
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          {[
+            { key: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+            { key: 'agenda', icon: 'event_note', label: 'Agenda' },
+            { key: 'calendar', icon: 'calendar_today', label: 'Calendar' },
+            { key: 'users', icon: 'group', label: 'Users' },
+            { key: 'reports', icon: 'description', label: 'Reports' },
+          ].map(item => (
             <button
-              onClick={handleLogout}
-              title="Keluar"
-              className="text-[#ba1a1a] hover:bg-[#ffdad6] p-1.5 rounded-md transition flex items-center"
+              key={item.key}
+              className={`sidebar-nav-item${activeTab === item.key ? ' active' : ''}`}
+              onClick={() => setActiveTab(item.key as any)}
             >
-              <span className="material-symbols-outlined text-sm">logout</span>
+              <span className="material-symbols-outlined">{item.icon}</span>
+              {item.label}
             </button>
+          ))}
+        </nav>
+
+        {/* Add Agenda Quick Button */}
+        <button className="sidebar-add-btn" onClick={openAddModal}>
+          <span className="material-symbols-outlined">add</span>
+          Add New Agenda
+        </button>
+
+        {/* User Info */}
+        <div className="sidebar-user">
+          <div className="sidebar-user-avatar">{userDisplayName.charAt(0).toUpperCase()}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sidebar-user-name">{userDisplayName}</div>
+            <div className="sidebar-user-role">Super Admin</div>
           </div>
+          <button className="sidebar-logout-btn" onClick={handleLogout} title="Keluar">
+            <span className="material-symbols-outlined">logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="pl-[260px] flex-1 flex flex-col min-h-screen">
-        {/* Top Navbar */}
-        <header className="h-16 bg-white border-b border-[#c3c6d7] px-8 flex items-center justify-between sticky top-0 z-30">
-          <div>
-            <h2 className="text-base font-bold text-[#0d1c2e] capitalize">
-              {activeTab === 'dashboard' && 'Dashboard Utama'}
-              {activeTab === 'agenda' && 'Kelola Agenda & Kegiatan'}
-              {activeTab === 'calendar' && 'Tampilan Kalender Kegiatan'}
-              {activeTab === 'users' && 'Manajemen Akun & Petugas'}
-              {activeTab === 'reports' && 'Laporan & Cetak Agenda'}
-            </h2>
-            <p className="text-xs text-[#737686]">Sistem Agenda Lapas Kelas IIB Painan</p>
+      {/* ==================== MAIN CONTENT ==================== */}
+      <div className="main-content">
+        {/* TOP BAR */}
+        <header className="topbar">
+          <div className="topbar-search">
+            <span className="material-symbols-outlined">search</span>
+            <input placeholder="Search activities, officers.." readOnly />
           </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                setEditingAgenda(null);
-                setShowAddAgendaModal(true);
-              }}
-              className="bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-2 shadow-sm transition"
-            >
-              <span className="material-symbols-outlined text-sm">add</span>
-              <span>+ Tambah Agenda</span>
+          <div className="topbar-user">
+            <div className="topbar-user-info">
+              <strong>{userDisplayName}</strong>
+              <span>NIP. {currentUser.email?.split('@')[0]?.toUpperCase()}</span>
+            </div>
+            <div className="topbar-user-avatar">
+              <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#004ac6' }}>person</span>
+            </div>
+            <button className="topbar-logout-btn" onClick={handleLogout}>
+              <span className="material-symbols-outlined">logout</span>
+              Logout
             </button>
           </div>
         </header>
 
-        {/* Content Body */}
-        <main className="p-8 flex-1">
-          {/* 1. DASHBOARD VIEW */}
+        {/* ==================== PAGE CONTENT ==================== */}
+        <div className="page-content">
+
+          {/* ======================== DASHBOARD ======================== */}
           {activeTab === 'dashboard' && (
-            <div className="space-y-8">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-[#c3c6d7] border-l-4 border-l-[#004ac6] shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-bold text-[#737686] uppercase">Agenda Hari Ini</p>
-                      <h3 className="text-3xl font-extrabold text-[#0d1c2e] mt-1">{totalToday}</h3>
-                    </div>
-                    <span className="material-symbols-outlined text-[#004ac6] bg-[#e6eeff] p-2 rounded-lg">today</span>
-                  </div>
+            <>
+              {/* Page Header */}
+              <div className="page-header">
+                <div>
+                  <h2>Dashboard Overview</h2>
+                  <p>Monitoring agenda harian dan status kegiatan Lapas Painan.</p>
                 </div>
+                <button className="add-agenda-btn" onClick={openAddModal}>
+                  <span className="material-symbols-outlined">add_circle</span>
+                  + TAMBAH AGENDA BARU
+                </button>
+              </div>
 
-                <div className="bg-white p-6 rounded-xl border border-[#c3c6d7] border-l-4 border-l-[#2563eb] shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-bold text-[#737686] uppercase">Agenda Mendatang</p>
-                      <h3 className="text-3xl font-extrabold text-[#0d1c2e] mt-1">{totalUpcoming}</h3>
-                    </div>
-                    <span className="material-symbols-outlined text-[#2563eb] bg-[#eff4ff] p-2 rounded-lg">event</span>
-                  </div>
+              {/* Stats Cards */}
+              <div className="stats-grid">
+                <div className="stat-card blue">
+                  <div className="stat-label">Total Agenda Hari Ini</div>
+                  <div className="stat-number">{String(totalToday).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">schedule</span>{totalToday} sedang berjalan</div>
                 </div>
-
-                <div className="bg-white p-6 rounded-xl border border-[#c3c6d7] border-l-4 border-l-[#10b981] shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-bold text-[#737686] uppercase">Kegiatan Selesai</p>
-                      <h3 className="text-3xl font-extrabold text-[#0d1c2e] mt-1">{totalCompleted}</h3>
-                    </div>
-                    <span className="material-symbols-outlined text-[#10b981] bg-[#d1fae5] p-2 rounded-lg">check_circle</span>
-                  </div>
+                <div className="stat-card indigo">
+                  <div className="stat-label">Agenda Mendatang</div>
+                  <div className="stat-number">{String(totalUpcoming).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">event</span>Hingga akhir pekan</div>
                 </div>
-
-                <div className="bg-white p-6 rounded-xl border border-[#c3c6d7] border-l-4 border-l-[#f59e0b] shadow-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-xs font-bold text-[#737686] uppercase">Dalam Proses</p>
-                      <h3 className="text-3xl font-extrabold text-[#0d1c2e] mt-1">{totalPending}</h3>
-                    </div>
-                    <span className="material-symbols-outlined text-[#f59e0b] bg-[#fef3c7] p-2 rounded-lg">pending</span>
-                  </div>
+                <div className="stat-card green">
+                  <div className="stat-label">Kegiatan Selesai</div>
+                  <div className="stat-number">{String(totalCompleted).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">check_circle</span>Bulan ini</div>
+                </div>
+                <div className="stat-card amber">
+                  <div className="stat-label">Menunggu Persetujuan</div>
+                  <div className="stat-number">{String(totalPending).padStart(2, '0')}</div>
+                  <div className="stat-meta"><span className="material-symbols-outlined">pending</span>Perlu tindakan segera</div>
                 </div>
               </div>
 
-              {/* Today's Timeline & Agenda Preview */}
-              <div className="bg-white rounded-xl border border-[#c3c6d7] p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0d1c2e]">Daftar Agenda Terbaru</h3>
-                    <p className="text-xs text-[#737686]">Jadwal kegiatan terupdate di Lapas Painan</p>
+              {/* Dashboard Grid */}
+              <div className="dashboard-grid">
+                {/* Today's Agenda Timeline */}
+                <div className="agenda-today">
+                  <div className="agenda-today-header">
+                    <h3>Agenda Hari Ini</h3>
+                    <span className="date-badge">{todayDisplay}</span>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('agenda')}
-                    className="text-xs font-bold text-[#004ac6] hover:underline flex items-center gap-1"
-                  >
-                    Lihat Semua <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </button>
+
+                  {todayAgendas.length === 0 ? (
+                    <div className="empty-state">
+                      <span className="material-symbols-outlined">event_busy</span>
+                      <p>Belum ada agenda hari ini</p>
+                      <small>Klik "+ Tambah Agenda Baru" untuk menambahkan kegiatan</small>
+                    </div>
+                  ) : (
+                    <div className="timeline">
+                      {todayAgendas.map((item) => (
+                        <div key={item.id} className="timeline-item">
+                          <div className="timeline-indicator">
+                            <div className={dotClass(item.status)}>
+                              <span className="material-symbols-outlined">{dotIcon(item.status)}</span>
+                            </div>
+                            <div className="timeline-line"></div>
+                          </div>
+                          <div className="timeline-content">
+                            <div className="timeline-row">
+                              <div>
+                                <div className="timeline-time">{item.time}{item.timeEnd ? ` - ${item.timeEnd} WIB` : ' WIB'}</div>
+                                <div className="timeline-title">{item.title}</div>
+                              </div>
+                              <span className={statusClass(item.status)}>{item.status.toUpperCase()}</span>
+                            </div>
+                            <div className="timeline-meta">
+                              <span><span className="material-symbols-outlined">location_on</span>{item.location}</span>
+                              <span><span className="material-symbols-outlined">person</span>{item.responsible}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {agendas.length === 0 ? (
-                  <div className="text-center py-12 bg-[#f8f9ff] rounded-lg border border-dashed border-[#c3c6d7]">
-                    <span className="material-symbols-outlined text-4xl text-[#737686]">event_busy</span>
-                    <p className="text-sm font-semibold text-[#434655] mt-2">Belum ada agenda terdaftar</p>
-                    <p className="text-xs text-[#737686] mt-1">Klik "+ Tambah Agenda" di pojok kanan atas untuk membuat kegiatan baru.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#eff4ff]">
-                    {agendas.slice(0, 5).map((item) => (
-                      <div key={item.id} className="py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-[#e6eeff] text-[#004ac6] flex flex-col items-center justify-center font-bold">
-                            <span className="text-xs leading-none">{item.time}</span>
-                          </div>
+                {/* Right Panel */}
+                <div className="right-panel">
+                  <div className="panel-card">
+                    <h4>Petugas Piket Hari Ini</h4>
+                    {officers.slice(0, 3).length === 0 ? (
+                      <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '16px 0' }}>Belum ada petugas terdaftar.</div>
+                    ) : (
+                      officers.slice(0, 3).map(o => (
+                        <div key={o.id} className="officer-item">
+                          <div className="officer-avatar"><span className="material-symbols-outlined">person</span></div>
                           <div>
-                            <h4 className="text-sm font-bold text-[#0d1c2e]">{item.title}</h4>
-                            <p className="text-xs text-[#737686] mt-0.5">
-                              📍 {item.location} | 👤 {item.responsible} ({item.division})
-                            </p>
+                            <div className="officer-name">{o.name || o.username}</div>
+                            <div className="officer-role">{o.division}</div>
                           </div>
+                          <div className="officer-status"></div>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                            item.status === 'Selesai' ? 'bg-[#d1fae5] text-[#065f46]' :
-                            item.status === 'Penting' ? 'bg-[#fee2e2] text-[#991b1b]' :
-                            item.status === 'Mendatang' ? 'bg-[#e0e7ff] text-[#3730a3]' :
-                            'bg-[#fef3c7] text-[#92400e]'
-                          }`}>
-                            {item.status}
-                          </span>
-                          <button
-                            onClick={() => handleOpenEditAgenda(item)}
-                            className="text-[#004ac6] hover:bg-[#e6eeff] p-1.5 rounded-lg transition"
-                          >
-                            <span className="material-symbols-outlined text-sm">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAgenda(item.id)}
-                            className="text-[#ba1a1a] hover:bg-[#ffdad6] p-1.5 rounded-lg transition"
-                          >
-                            <span className="material-symbols-outlined text-sm">delete</span>
-                          </button>
-                        </div>
+                      ))
+                    )}
+                    {/* Super Admin hardcoded */}
+                    <div className="officer-item">
+                      <div className="officer-avatar"><span className="material-symbols-outlined">admin_panel_settings</span></div>
+                      <div>
+                        <div className="officer-name">Gilang Lubis</div>
+                        <div className="officer-role">Super Admin</div>
                       </div>
-                    ))}
+                      <div className="officer-status"></div>
+                    </div>
                   </div>
-                )}
+
+                  <div className="panel-card">
+                    <h4>Agenda Mendatang</h4>
+                    {agendas.filter(a => a.date > todayStr).slice(0, 3).length === 0 ? (
+                      <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '8px 0' }}>Tidak ada agenda mendatang.</div>
+                    ) : (
+                      agendas.filter(a => a.date > todayStr).slice(0, 3).map(item => (
+                        <div key={item.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f4ff' }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0d1c2e' }}>{item.title}</div>
+                          <div style={{ fontSize: 11, color: '#737686', marginTop: 2 }}>{item.date} · {item.time}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* 2. AGENDA MANAGEMENT VIEW */}
+          {/* ======================== AGENDA MANAGEMENT ======================== */}
           {activeTab === 'agenda' && (
-            <div className="space-y-6">
+            <>
+              <div className="page-header">
+                <div>
+                  <h2>Kelola Agenda</h2>
+                  <p>Daftar seluruh kegiatan dan agenda Lapas Painan.</p>
+                </div>
+                <button className="add-agenda-btn" onClick={openAddModal}>
+                  <span className="material-symbols-outlined">add</span>
+                  + Tambah Agenda
+                </button>
+              </div>
+
               {/* Filter Bar */}
-              <div className="bg-white p-4 rounded-xl border border-[#c3c6d7] flex flex-wrap items-center justify-between gap-4 shadow-sm">
-                <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-                  <span className="material-symbols-outlined text-[#737686]">search</span>
+              <div className="filter-bar">
+                <div className="search-box">
+                  <span className="material-symbols-outlined">search</span>
                   <input
-                    type="text"
                     placeholder="Cari agenda, lokasi, atau penanggung jawab..."
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#004ac6]"
                     value={agendaSearch}
-                    onChange={(e) => setAgendaSearch(e.target.value)}
+                    onChange={e => setAgendaSearch(e.target.value)}
                   />
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <select
-                    className="bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#004ac6]"
-                    value={agendaStatusFilter}
-                    onChange={(e) => setAgendaStatusFilter(e.target.value)}
-                  >
-                    <option value="All">Semua Status</option>
-                    <option value="Proses">Proses</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Mendatang">Mendatang</option>
-                    <option value="Penting">Penting</option>
-                  </select>
-
-                  <div className="flex bg-[#f8f9ff] p-1 rounded-lg border border-[#c3c6d7]">
-                    <button
-                      onClick={() => setAgendaTabFilter('all')}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition ${agendaTabFilter === 'all' ? 'bg-[#004ac6] text-white' : 'text-[#737686]'}`}
-                    >
-                      Semua
-                    </button>
-                    <button
-                      onClick={() => setAgendaTabFilter('today')}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition ${agendaTabFilter === 'today' ? 'bg-[#004ac6] text-white' : 'text-[#737686]'}`}
-                    >
-                      Hari Ini
-                    </button>
-                    <button
-                      onClick={() => setAgendaTabFilter('upcoming')}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition ${agendaTabFilter === 'upcoming' ? 'bg-[#004ac6] text-white' : 'text-[#737686]'}`}
-                    >
-                      Mendatang
-                    </button>
-                  </div>
+                <select className="filter-select" value={agendaStatusFilter} onChange={e => setAgendaStatusFilter(e.target.value)}>
+                  <option value="All">Semua Status</option>
+                  <option value="Proses">Proses</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Mendatang">Mendatang</option>
+                  <option value="Penting">Penting</option>
+                </select>
+                <div className="tab-group">
+                  {[
+                    { key: 'all', label: 'Semua' },
+                    { key: 'today', label: 'Hari Ini' },
+                    { key: 'upcoming', label: 'Mendatang' },
+                    { key: 'archive', label: 'Arsip' },
+                  ].map(t => (
+                    <button key={t.key} className={`tab-btn${agendaTabFilter === t.key ? ' active' : ''}`} onClick={() => setAgendaTabFilter(t.key as any)}>{t.label}</button>
+                  ))}
                 </div>
               </div>
 
               {/* Data Table */}
-              <div className="bg-white rounded-xl border border-[#c3c6d7] overflow-hidden shadow-sm">
-                <table className="w-full text-left border-collapse">
+              <div className="data-table-wrap">
+                <table>
                   <thead>
-                    <tr className="bg-[#f8f9ff] border-b border-[#c3c6d7] text-[11px] font-bold text-[#737686] uppercase tracking-wider">
-                      <th className="p-4">Tanggal & Waktu</th>
-                      <th className="p-4">Nama Kegiatan</th>
-                      <th className="p-4">Penanggung Jawab</th>
-                      <th className="p-4">Lokasi</th>
-                      <th className="p-4">Divisi</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#eff4ff] text-xs">
-                    {filteredAgendas.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="text-center py-8 text-[#737686]">
-                          Tidak ada agenda yang cocok dengan pencarian/filter.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredAgendas.map((agenda) => (
-                        <tr key={agenda.id} className="hover:bg-[#f8f9ff] transition">
-                          <td className="p-4 font-semibold">
-                            <div>{agenda.date}</div>
-                            <div className="text-[10px] text-[#737686]">{agenda.time} WIB</div>
-                          </td>
-                          <td className="p-4 font-bold text-[#0d1c2e]">
-                            {agenda.title}
-                            {agenda.description && <p className="text-[10px] text-[#737686] font-normal mt-0.5 line-clamp-1">{agenda.description}</p>}
-                          </td>
-                          <td className="p-4">{agenda.responsible}</td>
-                          <td className="p-4">{agenda.location}</td>
-                          <td className="p-4"><span className="bg-[#e6eeff] text-[#004ac6] px-2 py-0.5 rounded font-semibold text-[10px]">{agenda.division}</span></td>
-                          <td className="p-4">
-                            <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${
-                              agenda.status === 'Selesai' ? 'bg-[#d1fae5] text-[#065f46]' :
-                              agenda.status === 'Penting' ? 'bg-[#fee2e2] text-[#991b1b]' :
-                              agenda.status === 'Mendatang' ? 'bg-[#e0e7ff] text-[#3730a3]' :
-                              'bg-[#fef3c7] text-[#92400e]'
-                            }`}>
-                              {agenda.status}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleOpenEditAgenda(agenda)}
-                                className="text-[#004ac6] hover:bg-[#e6eeff] p-1.5 rounded transition"
-                                title="Edit"
-                              >
-                                <span className="material-symbols-outlined text-base">edit</span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAgenda(agenda.id)}
-                                className="text-[#ba1a1a] hover:bg-[#ffdad6] p-1.5 rounded transition"
-                                title="Hapus"
-                              >
-                                <span className="material-symbols-outlined text-base">delete</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 3. CALENDAR VIEW */}
-          {activeTab === 'calendar' && (
-            <div className="bg-white p-6 rounded-xl border border-[#c3c6d7] shadow-sm space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-base font-bold">Kalender Agenda Lapas Painan</h3>
-                <span className="text-xs text-[#737686]">Bulan Ini (Real-time Grid)</span>
-              </div>
-              <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold bg-[#f8f9ff] p-3 rounded-lg border border-[#c3c6d7]">
-                <div>Minggu</div><div>Senin</div><div>Selasa</div><div>Rabu</div><div>Kamis</div><div>Jumat</div><div>Sabtu</div>
-              </div>
-              <div className="grid grid-cols-7 gap-2">
-                {Array.from({ length: 31 }).map((_, i) => {
-                  const dayNum = i + 1;
-                  const dayStr = `2026-07-${dayNum < 10 ? '0' + dayNum : dayNum}`;
-                  const dayAgendas = agendas.filter(a => a.date === dayStr);
-                  return (
-                    <div key={i} className="min-h-[90px] p-2 bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg flex flex-col justify-between">
-                      <span className="text-xs font-bold text-[#737686]">{dayNum}</span>
-                      <div className="space-y-1 mt-1">
-                        {dayAgendas.map(item => (
-                          <div key={item.id} className="text-[9px] bg-[#004ac6] text-white p-1 rounded font-semibold truncate" title={item.title}>
-                            {item.time} - {item.title}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 4. USER MANAGEMENT VIEW */}
-          {activeTab === 'users' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-bold">Daftar Akun Petugas & Admin</h3>
-                  <p className="text-xs text-[#737686]">Pengelolaan akun resmi terdaftar di sistem SINORA</p>
-                </div>
-                <button
-                  onClick={() => setShowAddUserModal(true)}
-                  className="bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-2 shadow-sm transition"
-                >
-                  <span className="material-symbols-outlined text-sm">person_add</span>
-                  <span>+ Buat Akun Petugas</span>
-                </button>
-              </div>
-
-              <div className="bg-white rounded-xl border border-[#c3c6d7] overflow-hidden shadow-sm">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#f8f9ff] border-b border-[#c3c6d7] text-[11px] font-bold text-[#737686] uppercase tracking-wider">
-                      <th className="p-4">ID User / Username</th>
-                      <th className="p-4">Nama Lengkap</th>
-                      <th className="p-4">NIP</th>
-                      <th className="p-4">Divisi / Seksi</th>
-                      <th className="p-4">Role</th>
-                      <th className="p-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#eff4ff] text-xs">
-                    {/* Hardcoded Super Admin Glubis */}
-                    <tr className="bg-[#eff4ff]/50 font-semibold">
-                      <td className="p-4 font-bold text-[#004ac6]">glubis</td>
-                      <td className="p-4">Gilang Lubis (Super Admin)</td>
-                      <td className="p-4">19950815 202012 1 001</td>
-                      <td className="p-4">TI & Admin Utama</td>
-                      <td className="p-4"><span className="bg-[#004ac6] text-white px-2 py-0.5 rounded text-[10px] font-bold">Super Admin</span></td>
-                      <td className="p-4"><span className="bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded text-[10px] font-bold">Aktif</span></td>
-                    </tr>
-                    {officers.map((user) => (
-                      <tr key={user.id} className="hover:bg-[#f8f9ff]">
-                        <td className="p-4 font-bold text-[#0d1c2e]">{user.username}</td>
-                        <td className="p-4">{user.name}</td>
-                        <td className="p-4">{user.nip || '-'}</td>
-                        <td className="p-4">{user.division}</td>
-                        <td className="p-4"><span className="bg-[#e6eeff] text-[#004ac6] px-2 py-0.5 rounded text-[10px] font-bold">{user.role}</span></td>
-                        <td className="p-4"><span className="bg-[#d1fae5] text-[#065f46] px-2 py-0.5 rounded text-[10px] font-bold">{user.status}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 5. REPORTS VIEW */}
-          {activeTab === 'reports' && (
-            <div className="bg-white p-8 rounded-xl border border-[#c3c6d7] shadow-sm space-y-6">
-              <div className="border-b border-[#c3c6d7] pb-4 flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-[#0d1c2e]">Cetak Laporan Agenda Resmi</h3>
-                  <p className="text-xs text-[#737686]">Pratinjau laporan format resmi Lapas Kelas IIB Painan</p>
-                </div>
-                <button
-                  onClick={() => window.print()}
-                  className="bg-[#004ac6] hover:bg-[#003ea8] text-white text-xs font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow transition"
-                >
-                  <span className="material-symbols-outlined text-sm">print</span>
-                  <span>Cetak / Download PDF</span>
-                </button>
-              </div>
-
-              {/* Kop Surat Resmi */}
-              <div className="border border-[#c3c6d7] p-8 rounded-lg bg-white space-y-6 max-w-4xl mx-auto">
-                <div className="text-center border-b-2 border-black pb-4">
-                  <h4 className="font-bold text-sm tracking-wide uppercase">KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI</h4>
-                  <h3 className="font-extrabold text-base uppercase">KANTOR WILAYAH SUMATERA BARAT</h3>
-                  <h2 className="font-extrabold text-lg uppercase text-[#004ac6]">LEMBAGA PEMASYARAKATAN KELAS IIB PAINAN</h2>
-                  <p className="text-[10px] text-[#434655]">Jl. Merdeka No. 12 Painan, Kab. Pesisir Selatan - Sumatera Barat</p>
-                </div>
-
-                <div className="text-center font-bold text-sm underline uppercase">
-                  LAPORAN REKAPITULASI AGENDA & KEGIATAN LAPAS
-                </div>
-
-                <table className="w-full text-left border-collapse border border-black text-xs">
-                  <thead>
-                    <tr className="bg-[#e6eeff] border-b border-black">
-                      <th className="border border-black p-2 text-center">No</th>
-                      <th className="border border-black p-2">Tanggal & Waktu</th>
-                      <th className="border border-black p-2">Nama Kegiatan</th>
-                      <th className="border border-black p-2">Penanggung Jawab</th>
-                      <th className="border border-black p-2">Lokasi</th>
-                      <th className="border border-black p-2">Status</th>
+                    <tr>
+                      <th>Tanggal & Waktu</th>
+                      <th>Nama Kegiatan</th>
+                      <th>Penanggung Jawab</th>
+                      <th>Lokasi</th>
+                      <th>Divisi</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'center' }}>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {agendas.map((item, idx) => (
-                      <tr key={item.id}>
-                        <td className="border border-black p-2 text-center">{idx + 1}</td>
-                        <td className="border border-black p-2">{item.date} ({item.time})</td>
-                        <td className="border border-black p-2 font-bold">{item.title}</td>
-                        <td className="border border-black p-2">{item.responsible}</td>
-                        <td className="border border-black p-2">{item.location}</td>
-                        <td className="border border-black p-2 font-bold">{item.status}</td>
+                    {filteredAgendas.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#737686' }}>
+                          Tidak ada agenda yang sesuai.
+                        </td>
+                      </tr>
+                    ) : filteredAgendas.map(agenda => (
+                      <tr key={agenda.id}>
+                        <td>
+                          <div className="td-primary">{agenda.date}</div>
+                          <div className="td-muted">{agenda.time}{agenda.timeEnd ? ` - ${agenda.timeEnd}` : ''} WIB</div>
+                        </td>
+                        <td>
+                          <div className="td-primary">{agenda.title}</div>
+                          {agenda.description && <div className="td-muted" style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agenda.description}</div>}
+                        </td>
+                        <td>{agenda.responsible}</td>
+                        <td>{agenda.location}</td>
+                        <td><span className="division-tag">{agenda.division}</span></td>
+                        <td><span className={statusClass(agenda.status)}>{agenda.status}</span></td>
+                        <td>
+                          <div className="action-btns">
+                            <button className="action-btn edit" onClick={() => openEditModal(agenda)} title="Edit">
+                              <span className="material-symbols-outlined">edit</span>
+                            </button>
+                            <button className="action-btn delete" onClick={() => deleteAgenda(agenda.id)} title="Hapus">
+                              <span className="material-symbols-outlined">delete</span>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </>
+          )}
 
-                <div className="flex justify-between pt-8 text-xs font-semibold">
-                  <div></div>
-                  <div className="text-center">
-                    <p>Painan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    <p className="mt-1 font-bold">Kepala Lapas Kelas IIB Painan</p>
-                    <div className="h-16"></div>
-                    <p className="underline font-bold">GILANG LUBIS, S.H.</p>
-                    <p className="text-[10px] text-[#737686]">NIP. 19950815 202012 1 001</p>
+          {/* ======================== CALENDAR ======================== */}
+          {activeTab === 'calendar' && (
+            <>
+              <div className="page-header">
+                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Lapas Painan.</p></div>
+              </div>
+              <div className="calendar-wrap">
+                <div className="calendar-header">
+                  <h3>Juli 2026</h3>
+                  <span style={{ fontSize: 13, color: '#737686' }}>Bulan Berjalan</span>
+                </div>
+                <div className="cal-grid-header">
+                  {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map(d => (
+                    <div key={d} className="cal-day-name">{d}</div>
+                  ))}
+                </div>
+                <div className="cal-grid">
+                  {/* Offset: July 2026 starts on Wednesday (index 3) */}
+                  {Array.from({ length: 3 }).map((_, i) => <div key={`empty-${i}`} className="cal-cell" style={{ background: '#f8f9ff' }}></div>)}
+                  {Array.from({ length: 31 }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dayStr = `2026-07-${String(dayNum).padStart(2, '0')}`;
+                    const dayAgendas = agendas.filter(a => a.date === dayStr);
+                    const isToday = dayStr === todayStr;
+                    return (
+                      <div key={dayNum} className="cal-cell" style={{ background: isToday ? '#eff4ff' : '#ffffff', border: isToday ? '1px solid #004ac6' : undefined }}>
+                        <div className="cal-cell-num" style={{ color: isToday ? '#004ac6' : undefined, fontWeight: isToday ? 800 : undefined }}>{dayNum}</div>
+                        {dayAgendas.slice(0, 2).map(item => (
+                          <div key={item.id} className="cal-event" title={item.title}>{item.time} {item.title}</div>
+                        ))}
+                        {dayAgendas.length > 2 && <div style={{ fontSize: 9, color: '#737686' }}>+{dayAgendas.length - 2} lagi</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ======================== USER MANAGEMENT ======================== */}
+          {activeTab === 'users' && (
+            <>
+              <div className="user-page-header">
+                <div><h2>Manajemen User</h2><p>Daftar akun petugas dan admin yang terdaftar di sistem SINORA.</p></div>
+                <button className="add-agenda-btn" onClick={() => setShowAddUserModal(true)}>
+                  <span className="material-symbols-outlined">person_add</span>
+                  + Buat Akun Baru
+                </button>
+              </div>
+
+              <div className="data-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID User</th>
+                      <th>Nama Lengkap</th>
+                      <th>NIP</th>
+                      <th>Divisi</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Super Admin Bawaan */}
+                    <tr style={{ background: '#eff4ff' }}>
+                      <td className="td-primary" style={{ color: '#004ac6' }}>glubis</td>
+                      <td>Gilang Lubis</td>
+                      <td>19950815 202012 1 001</td>
+                      <td><span className="division-tag">TI & Admin</span></td>
+                      <td><span style={{ background: '#004ac6', color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>Super Admin</span></td>
+                      <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>Aktif</span></td>
+                    </tr>
+                    {officers.map(user => (
+                      <tr key={user.id}>
+                        <td className="td-primary">{user.username}</td>
+                        <td>{user.name}</td>
+                        <td>{user.nip || '-'}</td>
+                        <td><span className="division-tag">{user.division}</span></td>
+                        <td><span style={{ background: '#e6eeff', color: '#004ac6', padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>{user.role}</span></td>
+                        <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>{user.status}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* ======================== REPORTS ======================== */}
+          {activeTab === 'reports' && (
+            <>
+              <div className="page-header">
+                <div><h2>Laporan & Cetak</h2><p>Rekapitulasi agenda resmi Lapas Kelas IIB Painan.</p></div>
+              </div>
+              <div className="report-wrap">
+                <div className="report-header-bar">
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 800 }}>Pratinjau Laporan Resmi</h3>
+                    <p style={{ fontSize: 13, color: '#737686', marginTop: 2 }}>Format Kop Surat Lapas Kelas IIB Painan</p>
+                  </div>
+                  <button className="print-btn" onClick={() => window.print()}>
+                    <span className="material-symbols-outlined">print</span>
+                    Cetak / Download PDF
+                  </button>
+                </div>
+
+                {/* Kop Surat */}
+                <div className="kop-surat">
+                  <div className="kop-surat-header">
+                    <h6>KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI</h6>
+                    <h4>KANTOR WILAYAH SUMATERA BARAT</h4>
+                    <h3>LEMBAGA PEMASYARAKATAN KELAS IIB PAINAN</h3>
+                    <small>Jl. Merdeka No. 12 Painan, Kab. Pesisir Selatan – Sumatera Barat</small>
+                  </div>
+
+                  <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 13, textDecoration: 'underline', textTransform: 'uppercase', marginBottom: 16 }}>
+                    Laporan Rekapitulasi Agenda & Kegiatan Lapas
+                  </div>
+
+                  <table className="kop-table">
+                    <thead>
+                      <tr>
+                        <th>No</th>
+                        <th>Tanggal & Waktu</th>
+                        <th>Nama Kegiatan</th>
+                        <th>Penanggung Jawab</th>
+                        <th>Lokasi</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {agendas.length === 0 ? (
+                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 16, color: '#737686' }}>Belum ada agenda tercatat.</td></tr>
+                      ) : agendas.map((item, idx) => (
+                        <tr key={item.id}>
+                          <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                          <td>{item.date} ({item.time})</td>
+                          <td style={{ fontWeight: 700 }}>{item.title}</td>
+                          <td>{item.responsible}</td>
+                          <td>{item.location}</td>
+                          <td style={{ fontWeight: 700 }}>{item.status}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div className="ttd-section">
+                    <div className="ttd-box">
+                      <p>Painan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                      <p style={{ marginTop: 4 }}>Kepala Lapas Kelas IIB Painan</p>
+                      <div className="ttd-space"></div>
+                      <p className="ttd-name">GILANG LUBIS, S.H.</p>
+                      <p style={{ fontSize: 11, color: '#737686' }}>NIP. 19950815 202012 1 001</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
-        </main>
-      </div>
 
-      {/* MODAL TAMBAH / EDIT AGENDA */}
+        </div>{/* end page-content */}
+      </div>{/* end main-content */}
+
+      {/* ======================== MODAL TAMBAH/EDIT AGENDA ======================== */}
       {showAddAgendaModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-[#c3c6d7]">
-            <div className="flex justify-between items-center mb-4 border-b border-[#eff4ff] pb-3">
-              <h3 className="font-bold text-base text-[#0d1c2e]">
-                {editingAgenda ? 'Edit Agenda Kegiatan' : 'Tambah Agenda Kegiatan Baru'}
-              </h3>
-              <button
-                onClick={() => setShowAddAgendaModal(false)}
-                className="text-[#737686] hover:bg-[#eff4ff] p-1 rounded-lg"
-              >
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>{editingAgenda ? 'Edit Agenda Kegiatan' : 'Tambah Agenda Kegiatan Baru'}</h3>
+              <button className="modal-close-btn" onClick={() => { setShowAddAgendaModal(false); setEditingAgenda(null); }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-
-            <form onSubmit={handleSaveAgenda} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#434655] mb-1">Nama / Judul Kegiatan</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                  placeholder="Contoh: Rapat Koordinasi Keamanan"
-                  value={agendaForm.title}
-                  onChange={(e) => setAgendaForm({ ...agendaForm, title: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Tanggal</label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={agendaForm.date}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, date: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Waktu (WIB)</label>
-                  <input
-                    type="time"
-                    required
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={agendaForm.time}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, time: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Lokasi</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    placeholder="Lokasi tempat"
-                    value={agendaForm.location}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, location: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Divisi / Seksi</label>
-                  <select
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={agendaForm.division}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, division: e.target.value })}
-                  >
-                    <option value="Kamtib">Kamtib</option>
-                    <option value="Pembinaan">Pembinaan</option>
-                    <option value="Tata Usaha">Tata Usaha</option>
-                    <option value="KPLP">KPLP</option>
-                  </select>
+            <form onSubmit={saveAgenda}>
+              <div className="modal-body">
+                <div className="modal-form">
+                  <div className="modal-field">
+                    <label>Nama / Judul Kegiatan</label>
+                    <input type="text" required placeholder="Contoh: Rapat Koordinasi Keamanan" value={agendaForm.title} onChange={e => setAgendaForm({ ...agendaForm, title: e.target.value })} />
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Tanggal</label>
+                      <input type="date" required value={agendaForm.date} onChange={e => setAgendaForm({ ...agendaForm, date: e.target.value })} />
+                    </div>
+                    <div className="modal-field">
+                      <label>Waktu Mulai</label>
+                      <input type="time" required value={agendaForm.time} onChange={e => setAgendaForm({ ...agendaForm, time: e.target.value })} />
+                    </div>
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Lokasi</label>
+                      <input type="text" required placeholder="Lokasi kegiatan" value={agendaForm.location} onChange={e => setAgendaForm({ ...agendaForm, location: e.target.value })} />
+                    </div>
+                    <div className="modal-field">
+                      <label>Divisi / Seksi</label>
+                      <select value={agendaForm.division} onChange={e => setAgendaForm({ ...agendaForm, division: e.target.value })}>
+                        <option>Kamtib</option>
+                        <option>Pembinaan</option>
+                        <option>Tata Usaha</option>
+                        <option>KPLP</option>
+                        <option>Umum</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Penanggung Jawab</label>
+                      <input type="text" required placeholder="Nama petugas" value={agendaForm.responsible} onChange={e => setAgendaForm({ ...agendaForm, responsible: e.target.value })} />
+                    </div>
+                    <div className="modal-field">
+                      <label>Status</label>
+                      <select value={agendaForm.status} onChange={e => setAgendaForm({ ...agendaForm, status: e.target.value as Agenda['status'] })}>
+                        <option value="Mendatang">Mendatang</option>
+                        <option value="Proses">Proses</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Penting">Penting</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="modal-field">
+                    <label>Keterangan (Opsional)</label>
+                    <textarea placeholder="Catatan rincian kegiatan..." value={agendaForm.description} onChange={e => setAgendaForm({ ...agendaForm, description: e.target.value })}></textarea>
+                  </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Penanggung Jawab</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    placeholder="Nama Petugas"
-                    value={agendaForm.responsible}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, responsible: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Status Kegiatan</label>
-                  <select
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={agendaForm.status}
-                    onChange={(e) => setAgendaForm({ ...agendaForm, status: e.target.value as any })}
-                  >
-                    <option value="Proses">Proses</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Mendatang">Mendatang</option>
-                    <option value="Penting">Penting</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#434655] mb-1">Keterangan Tambahan (Opsional)</label>
-                <textarea
-                  className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                  rows={3}
-                  placeholder="Catatan rincian kegiatan..."
-                  value={agendaForm.description}
-                  onChange={(e) => setAgendaForm({ ...agendaForm, description: e.target.value })}
-                ></textarea>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddAgendaModal(false)}
-                  className="px-4 py-2 bg-[#f8f9ff] border border-[#c3c6d7] text-[#434655] rounded-lg text-xs font-bold hover:bg-[#eff4ff]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#004ac6] hover:bg-[#003ea8] text-white rounded-lg text-xs font-bold shadow transition"
-                >
-                  Simpan Agenda
-                </button>
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => { setShowAddAgendaModal(false); setEditingAgenda(null); }}>Batal</button>
+                <button type="submit" className="btn-save">Simpan Agenda</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL TAMBAH USER / PETUGAS */}
+      {/* ======================== MODAL TAMBAH USER ======================== */}
       {showAddUserModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-[#c3c6d7]">
-            <div className="flex justify-between items-center mb-4 border-b border-[#eff4ff] pb-3">
-              <h3 className="font-bold text-base text-[#0d1c2e]">Buat Akun Petugas Baru</h3>
-              <button
-                onClick={() => setShowAddUserModal(false)}
-                className="text-[#737686] hover:bg-[#eff4ff] p-1 rounded-lg"
-              >
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <div className="modal-header">
+              <h3>Buat Akun Petugas Baru</h3>
+              <button className="modal-close-btn" onClick={() => setShowAddUserModal(false)}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#434655] mb-1">Username / ID User</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                  placeholder="Contoh: petugas01"
-                  value={userForm.username}
-                  onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#434655] mb-1">Nama Lengkap</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                  placeholder="Nama Petugas"
-                  value={userForm.name}
-                  onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#434655] mb-1">NIP (Opsional)</label>
-                <input
-                  type="text"
-                  className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                  placeholder="Nomor Induk Pegawai"
-                  value={userForm.nip}
-                  onChange={(e) => setUserForm({ ...userForm, nip: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Divisi / Seksi</label>
-                  <select
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={userForm.division}
-                    onChange={(e) => setUserForm({ ...userForm, division: e.target.value })}
-                  >
-                    <option value="Kamtib">Kamtib</option>
-                    <option value="Pembinaan">Pembinaan</option>
-                    <option value="Tata Usaha">Tata Usaha</option>
-                    <option value="KPLP">KPLP</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#434655] mb-1">Role Akses</label>
-                  <select
-                    className="w-full bg-[#f8f9ff] border border-[#c3c6d7] rounded-lg p-2.5 text-xs outline-none focus:border-[#004ac6]"
-                    value={userForm.role}
-                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value as any })}
-                  >
-                    <option value="Petugas">Petugas</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Super Admin">Super Admin</option>
-                  </select>
+            <form onSubmit={saveOfficer}>
+              <div className="modal-body">
+                <div className="modal-form">
+                  <div className="modal-field">
+                    <label>Username / ID User</label>
+                    <input type="text" required placeholder="Contoh: petugas01" value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Nama Lengkap</label>
+                    <input type="text" required placeholder="Nama Petugas" value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} />
+                  </div>
+                  <div className="modal-field">
+                    <label>NIP (Opsional)</label>
+                    <input type="text" placeholder="Nomor Induk Pegawai" value={userForm.nip} onChange={e => setUserForm({ ...userForm, nip: e.target.value })} />
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Divisi</label>
+                      <select value={userForm.division} onChange={e => setUserForm({ ...userForm, division: e.target.value })}>
+                        <option>Kamtib</option>
+                        <option>Pembinaan</option>
+                        <option>Tata Usaha</option>
+                        <option>KPLP</option>
+                        <option>Umum</option>
+                      </select>
+                    </div>
+                    <div className="modal-field">
+                      <label>Role</label>
+                      <select value={userForm.role} onChange={e => setUserForm({ ...userForm, role: e.target.value as Officer['role'] })}>
+                        <option value="Petugas">Petugas</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ background: '#fff8e1', border: '1px solid #f59e0b', padding: '10px 14px', fontSize: 12, color: '#92400e' }}>
+                    <strong>Catatan:</strong> Setelah menambah data di sini, buat akun login di <strong>Firebase Console → Authentication → Add User</strong> dengan email <em>{userForm.username ? `${userForm.username}@sinora.internal` : '[username]@sinora.internal'}</em>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddUserModal(false)}
-                  className="px-4 py-2 bg-[#f8f9ff] border border-[#c3c6d7] text-[#434655] rounded-lg text-xs font-bold hover:bg-[#eff4ff]"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#004ac6] hover:bg-[#003ea8] text-white rounded-lg text-xs font-bold shadow transition"
-                >
-                  Tambah Akun
-                </button>
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => setShowAddUserModal(false)}>Batal</button>
+                <button type="submit" className="btn-save">Tambah Petugas</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }
-
-export default App;
