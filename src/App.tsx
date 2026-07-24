@@ -101,7 +101,7 @@ export default function App() {
   // --- Agenda Form ---
   const emptyAgendaForm = {
     title: '', date: todayStr, time: '08:00', timeEnd: '09:00',
-    location: 'Aula Lapas Painan', responsible: '', division: 'Kamtib',
+    location: 'Aula Rutan IIB Painan', responsible: '', division: 'Kamtib',
     category: 'Rapat Internal', status: 'Mendatang' as Agenda['status'], description: ''
   };
   const [agendaForm, setAgendaForm] = useState(emptyAgendaForm);
@@ -318,7 +318,7 @@ export default function App() {
 
           {/* Divider Bawah */}
           <div className="login-divider">
-            <hr /><span>Lapas Painan</span><hr />
+            <hr /><span>Rutan IIB Painan</span><hr />
           </div>
         </div>
       </div>
@@ -341,7 +341,7 @@ export default function App() {
           </div>
           <div>
             <div className="sidebar-brand-name">SINORA</div>
-            <div className="sidebar-brand-sub">Lapas Painan</div>
+            <div className="sidebar-brand-sub">Rutan IIB Painan</div>
           </div>
         </div>
 
@@ -417,7 +417,7 @@ export default function App() {
               <div className="page-header">
                 <div>
                   <h2>Dashboard Overview</h2>
-                  <p>Monitoring agenda harian dan status kegiatan Lapas Painan.</p>
+                  <p>Monitoring agenda harian dan status kegiatan Rutan IIB Painan.</p>
                 </div>
                 <button className="add-agenda-btn" onClick={openAddModal}>
                   <span className="material-symbols-outlined">add_circle</span>
@@ -546,7 +546,7 @@ export default function App() {
               <div className="page-header">
                 <div>
                   <h2>Kelola Agenda</h2>
-                  <p>Daftar seluruh kegiatan dan agenda Lapas Painan.</p>
+                  <p>Daftar seluruh kegiatan dan agenda Rutan IIB Painan.</p>
                 </div>
                 <button className="add-agenda-btn" onClick={openAddModal}>
                   <span className="material-symbols-outlined">add</span>
@@ -640,7 +640,7 @@ export default function App() {
           {activeTab === 'calendar' && (
             <>
               <div className="page-header">
-                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Lapas Painan.</p></div>
+                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Rutan IIB Painan.</p></div>
               </div>
               <div className="calendar-wrap">
                 <div className="calendar-header">
@@ -728,13 +728,13 @@ export default function App() {
           {activeTab === 'reports' && (
             <>
               <div className="page-header">
-                <div><h2>Laporan & Cetak</h2><p>Rekapitulasi agenda resmi Lapas Kelas IIB Painan.</p></div>
+                <div><h2>Laporan & Cetak</h2><p>Rekapitulasi agenda resmi Rutan Kelas IIB Painan.</p></div>
               </div>
               <div className="report-wrap">
                 <div className="report-header-bar">
                   <div>
                     <h3 style={{ fontSize: 18, fontWeight: 800 }}>Pratinjau Laporan Resmi</h3>
-                    <p style={{ fontSize: 13, color: '#737686', marginTop: 2 }}>Format Kop Surat Lapas Kelas IIB Painan</p>
+                    <p style={{ fontSize: 13, color: '#737686', marginTop: 2 }}>Format Kop Surat Rutan Kelas IIB Painan</p>
                   </div>
                   <button className="print-btn" onClick={() => window.print()}>
                     <span className="material-symbols-outlined">print</span>
@@ -747,12 +747,12 @@ export default function App() {
                   <div className="kop-surat-header">
                     <h6>KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI</h6>
                     <h4>KANTOR WILAYAH SUMATERA BARAT</h4>
-                    <h3>LEMBAGA PEMASYARAKATAN KELAS IIB PAINAN</h3>
+                    <h3>RUMAH TAHANAN NEGARA KELAS IIB PAINAN</h3>
                     <small>Jl. Merdeka No. 12 Painan, Kab. Pesisir Selatan – Sumatera Barat</small>
                   </div>
 
                   <div style={{ textAlign: 'center', fontWeight: 800, fontSize: 13, textDecoration: 'underline', textTransform: 'uppercase', marginBottom: 16 }}>
-                    Laporan Rekapitulasi Agenda & Kegiatan Lapas
+                    Laporan Rekapitulasi Agenda & Kegiatan Rutan
                   </div>
 
                   <table className="kop-table">
@@ -785,7 +785,7 @@ export default function App() {
                   <div className="ttd-section">
                     <div className="ttd-box">
                       <p>Painan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                      <p style={{ marginTop: 4 }}>Kepala Lapas Kelas IIB Painan</p>
+                      <p style={{ marginTop: 4 }}>Kepala Rutan Kelas IIB Painan</p>
                       <div className="ttd-space"></div>
                       <p className="ttd-name">GILANG LUBIS, S.H.</p>
                       <p style={{ fontSize: 11, color: '#737686' }}>NIP. 19950815 202012 1 001</p>
