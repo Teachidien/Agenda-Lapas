@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SINORA - Calendar View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed": "#00164e",
+                    "surface": "#f8f9ff",
+                    "on-surface-variant": "#434655",
+                    "inverse-primary": "#b4c5ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface": "#0d1c2e",
+                    "primary-container": "#2563eb",
+                    "on-primary-container": "#eeefff",
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "secondary-fixed-dim": "#b6c4ff",
+                    "surface-container": "#e6eeff",
+                    "secondary-container": "#8fa7fe",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-container-low": "#eff4ff",
+                    "surface-variant": "#d5e3fc",
+                    "primary": "#004ac6",
+                    "surface-container-highest": "#d5e3fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#ccdbf3",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-surface": "#233144",
+                    "on-tertiary-container": "#ffede6",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "secondary": "#4059aa",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary": "#943700",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dce1ff",
+                    "background": "#f8f9ff",
+                    "outline": "#737686",
+                    "on-secondary-container": "#1d3989",
+                    "on-secondary-fixed-variant": "#264191",
+                    "on-background": "#0d1c2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sidebar_width": "280px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "grid_gutter": "20px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-bold": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .calendar-day {
+            min-height: 120px;
+            border: 0.5px solid #E2E8F0;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .active-nav-indicator {
+            position: absolute;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #004ac6;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md overflow-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar_width bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col">
+<div class="p-lg flex flex-col gap-sm">
+<div class="flex items-center gap-md mb-xl">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white">shield_person</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary">SINORA</h1>
+<p class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Lapas Painan</p>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-md px-lg rounded-lg font-label-bold text-label-bold flex items-center justify-center gap-sm mb-lg transition-all hover:bg-on-primary-fixed-variant active:scale-95">
+<span class="material-symbols-outlined">add</span>
+                Add New Agenda
+            </button>
+<nav class="flex flex-col gap-xs">
+<!-- Dashboard -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-label-bold text-label-bold">Dashboard</span>
+</a>
+<!-- Agenda -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">event_note</span>
+<span class="font-label-bold text-label-bold">Agenda</span>
+</a>
+<!-- Calendar (ACTIVE) -->
+<a class="flex items-center gap-md bg-surface-container text-primary py-md px-lg border-l-4 border-primary transition-all relative" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-bold text-label-bold">Calendar</span>
+</a>
+<!-- Users -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">group</span>
+<span class="font-label-bold text-label-bold">Users</span>
+</a>
+<!-- Reports -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">assessment</span>
+<span class="font-label-bold text-label-bold">Reports</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-lg border-t border-outline-variant">
+<div class="flex items-center gap-md">
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a prison officer in uniform, clean lighting, sharp focus, administrative office background, neutral professional color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjIyEKRTJu5BRbL7_d4E4xVZ6dOCcaE9xSgGPdgKRHbwY-WsCmLqxv8P9Sy5xR8rtV5mRA8GD-PKJiba-zoJBEGDHXyc5FNHozKkyy9bYI5pOpbPm7kgcRTrA9HKQvyku2cJddV8lPW7C9ZwnnLSDvmuQ6852JZlJRYScV4c-8ikVRk91m5OO5SZeQrQMzyyB-8HldwiuecNSFyZaxicVS2H-43vbZFgySHMQjqbF6jsUTDB8fnboDUrh5rxF59FkC97askhHOQXm9"/>
+<div class="overflow-hidden">
+<p class="font-label-bold text-label-bold truncate">Ahmad Fauzi</p>
+<p class="text-[10px] text-outline truncate">NIP: 19850412 201012 1 002</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopAppBar & Main Content Area -->
+<div class="ml-sidebar_width flex flex-col h-screen">
+<!-- TopAppBar -->
+<header class="h-xl flex justify-between items-center px-lg bg-surface-container-lowest border-b border-outline-variant z-30">
+<div class="flex items-center gap-xl flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded py-2 pl-xl pr-md font-body-md text-body-md focus:outline-none focus:border-primary transition-all" placeholder="Search agenda, events, or users..." type="text"/>
+</div>
+<div class="flex items-center gap-lg">
+<button class="flex items-center gap-xs font-label-bold text-label-bold text-primary transition-transform active:scale-95">
+<span class="material-symbols-outlined">chevron_left</span>
+                        Prev
+                    </button>
+<h2 class="font-headline-md text-headline-md font-bold">October 2024</h2>
+<button class="flex items-center gap-xs font-label-bold text-label-bold text-primary transition-transform active:scale-95">
+                        Next
+                        <span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs bg-surface-container px-3 py-1.5 rounded">
+<span class="material-symbols-outlined text-primary text-[20px]">notifications</span>
+<span class="w-2 h-2 bg-error rounded-full mb-2 -ml-2"></span>
+</div>
+<button class="font-label-bold text-label-bold text-on-surface-variant hover:text-error transition-colors px-md py-xs border border-outline-variant rounded">Logout</button>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex flex-1 overflow-hidden">
+<!-- Calendar Grid Container -->
+<section class="flex-1 overflow-y-auto custom-scrollbar bg-white p-6">
+<div class="calendar-grid bg-white">
+<!-- Day Headers -->
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">SUN</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">MON</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">TUE</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">WED</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">THU</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">FRI</div>
+<div class="py-sm px-md text-center font-label-bold text-label-bold text-outline border-b border-outline-variant">SAT</div>
+<!-- Row 1 -->
+<div class="calendar-day bg-surface-container-low opacity-50 p-sm text-right font-label-bold text-label-sm">29</div>
+<div class="calendar-day bg-surface-container-low opacity-50 p-sm text-right font-label-bold text-label-sm">30</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">1</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">2</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">3</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">4
+                        <div class="mt-2 text-left">
+<div class="bg-primary text-white text-[10px] px-2 py-1 rounded-sm mb-1 truncate cursor-pointer hover:bg-on-primary-fixed-variant transition-colors">
+                                Weekly Inspection
+                            </div>
+</div>
+</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">5</div>
+<!-- Row 2 -->
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">6</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">7
+                        <div class="mt-2 text-left">
+<div class="bg-primary text-white text-[10px] px-2 py-1 rounded-sm mb-1 truncate cursor-pointer hover:bg-on-primary-fixed-variant transition-colors">
+                                Staff Briefing
+                            </div>
+<div class="bg-tertiary text-white text-[10px] px-2 py-1 rounded-sm mb-1 truncate cursor-pointer hover:bg-tertiary-container transition-colors">
+                                Facility Audit
+                            </div>
+</div>
+</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">8</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">9</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">10</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">11</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">12</div>
+<!-- Row 3 (Current Week Focus) -->
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">13</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">14</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">15
+                        <div class="mt-2 text-left">
+<div class="bg-secondary text-white text-[10px] px-2 py-1 rounded-sm mb-1 truncate cursor-pointer">
+                                Visiting Hours
+                            </div>
+</div>
+</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm bg-surface-container-high ring-2 ring-primary ring-inset">16
+                        <div class="mt-2 text-left">
+<div class="bg-primary text-white text-[10px] px-2 py-1 rounded-sm mb-1 truncate cursor-pointer">
+                                Security Drill
+                            </div>
+<div class="bg-on-primary-container text-primary text-[10px] px-2 py-1 border border-primary rounded-sm mb-1 truncate cursor-pointer">
+                                Legal Counseling
+                            </div>
+</div>
+</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">17</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">18</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">19</div>
+<!-- Row 4 -->
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">20</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">21</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">22</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">23</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">24</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">25</div>
+<div class="calendar-day p-sm text-right font-label-bold text-label-sm">26</div>
+</div>
+</section>
+<!-- Details Side Panel -->
+<aside class="w-96 bg-surface-container-lowest border-l border-outline-variant flex flex-col">
+<div class="p-lg border-b border-outline-variant bg-white">
+<h3 class="font-headline-md text-headline-md font-bold mb-xs">October 16, 2024</h3>
+<p class="text-outline font-label-bold text-label-bold">Wednesday • 4 Scheduled Events</p>
+</div>
+<div class="flex-1 overflow-y-auto p-lg custom-scrollbar space-y-md">
+<!-- Schedule Item 1 -->
+<div class="border border-outline-variant p-md bg-white rounded-lg group hover:border-primary transition-all">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-primary-container text-on-primary-container text-[10px] font-bold px-2 py-0.5 rounded uppercase">Security</span>
+<span class="text-label-sm font-label-sm text-outline">08:00 AM</span>
+</div>
+<h4 class="font-label-bold text-label-bold text-on-surface mb-xs">Quarterly Security Drill</h4>
+<p class="text-label-sm text-on-surface-variant leading-tight">Full facility evacuation and protocol testing. Personnel must be at stations.</p>
+<div class="mt-md flex items-center gap-sm">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-surface-container border border-white flex items-center justify-center text-[10px]">AF</div>
+<div class="w-6 h-6 rounded-full bg-surface-variant border border-white flex items-center justify-center text-[10px]">RS</div>
+<div class="w-6 h-6 rounded-full bg-outline-variant border border-white flex items-center justify-center text-[10px]">+4</div>
+</div>
+<span class="text-[10px] text-outline font-label-bold">Assigned Officers</span>
+</div>
+</div>
+<!-- Schedule Item 2 -->
+<div class="border border-outline-variant p-md bg-white rounded-lg group hover:border-primary transition-all">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-2 py-0.5 rounded uppercase">Social</span>
+<span class="text-label-sm font-label-sm text-outline">10:30 AM</span>
+</div>
+<h4 class="font-label-bold text-label-bold text-on-surface mb-xs">Legal Counseling Session</h4>
+<p class="text-label-sm text-on-surface-variant leading-tight">Pro-bono legal support for inmates in Sector B. Coordination with LBH Painan.</p>
+<div class="mt-md flex items-center justify-between">
+<div class="flex items-center gap-xs text-[10px] text-primary font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                Multi-Purpose Hall
+                            </div>
+<button class="text-primary hover:underline text-[10px] font-bold">Details</button>
+</div>
+</div>
+<!-- Schedule Item 3 -->
+<div class="border border-outline-variant p-md bg-white rounded-lg group hover:border-primary transition-all opacity-80">
+<div class="flex justify-between items-start mb-sm">
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] font-bold px-2 py-0.5 rounded uppercase">Internal</span>
+<span class="text-label-sm font-label-sm text-outline">01:00 PM</span>
+</div>
+<h4 class="font-label-bold text-label-bold text-on-surface mb-xs">Inventory Restock</h4>
+<p class="text-label-sm text-on-surface-variant leading-tight">Monthly supply arrival: rations, medical, and office equipment.</p>
+</div>
+<!-- Timeline Visualization -->
+<div class="relative pl-lg mt-xl">
+<div class="absolute left-[9px] top-0 bottom-0 w-0.5 bg-outline-variant"></div>
+<h5 class="text-label-sm font-bold text-outline uppercase mb-md tracking-widest">Timeline Overview</h5>
+<div class="relative mb-lg">
+<div class="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-white"></div>
+<p class="text-label-sm font-bold">08:00 - Morning Briefing</p>
+<p class="text-[10px] text-outline">Main Hall • Completed</p>
+</div>
+<div class="relative mb-lg">
+<div class="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-white animate-pulse"></div>
+<p class="text-label-sm font-bold text-primary">10:30 - Counseling Session</p>
+<p class="text-[10px] text-primary">Sector B • Ongoing</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1.5 w-3 h-3 rounded-full bg-outline-variant ring-4 ring-white"></div>
+<p class="text-label-sm font-bold text-on-surface-variant">02:00 - Warden Meeting</p>
+<p class="text-[10px] text-outline">Admin Office • Upcoming</p>
+</div>
+</div>
+</div>
+<div class="p-lg bg-surface-container-low mt-auto">
+<button class="w-full py-md bg-white border border-outline-variant rounded font-label-bold text-label-bold hover:bg-primary hover:text-white hover:border-primary transition-all active:scale-95">
+                        Download Daily Report
+                    </button>
+</div>
+</aside>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('.calendar-day:not(.bg-surface-container-low)').forEach(day => {
+            day.addEventListener('click', function() {
+                // Clear active states
+                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('bg-surface-container-high', 'ring-2', 'ring-primary', 'ring-inset'));
+                
+                // Set current active
+                this.classList.add('bg-surface-container-high', 'ring-2', 'ring-primary', 'ring-inset');
+                
+                // Update Sidebar Header (Simulation)
+                const dayNum = this.innerText.split('\n')[0].trim();
+                const header = document.querySelector('h3.font-headline-md');
+                if(header) header.innerText = `October ${dayNum}, 2024`;
+            });
+        });
+    </script>
+</body></html>

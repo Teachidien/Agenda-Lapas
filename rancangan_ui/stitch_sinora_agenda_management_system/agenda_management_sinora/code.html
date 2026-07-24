@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SINORA - Agenda Management</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed": "#00164e",
+                    "surface": "#f8f9ff",
+                    "on-surface-variant": "#434655",
+                    "inverse-primary": "#b4c5ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface": "#0d1c2e",
+                    "primary-container": "#2563eb",
+                    "on-primary-container": "#eeefff",
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "secondary-fixed-dim": "#b6c4ff",
+                    "surface-container": "#e6eeff",
+                    "secondary-container": "#8fa7fe",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-container-low": "#eff4ff",
+                    "surface-variant": "#d5e3fc",
+                    "primary": "#004ac6",
+                    "surface-container-highest": "#d5e3fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#ccdbf3",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-surface": "#233144",
+                    "on-tertiary-container": "#ffede6",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "secondary": "#4059aa",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary": "#943700",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dce1ff",
+                    "background": "#f8f9ff",
+                    "outline": "#737686",
+                    "on-secondary-container": "#1d3989",
+                    "on-secondary-fixed-variant": "#264191",
+                    "on-background": "#0d1c2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sidebar_width": "280px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "grid_gutter": "20px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-bold": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9ff;
+        }
+        .sidebar-active {
+            border-left: 4px solid #004ac6;
+            background-color: #e6eeff;
+            color: #004ac6;
+        }
+        .asymmetric-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- SIDEBAR -->
+<aside class="fixed left-0 top-0 h-full w-sidebar_width bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col">
+<div class="p-lg flex items-center gap-md">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary">SINORA</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Lapas Painan</p>
+</div>
+</div>
+<nav class="flex-1 mt-md">
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-bold text-label-bold">Dashboard</span>
+</a>
+<a class="sidebar-active flex items-center gap-md py-md px-lg transition-all opacity-90 scale-[0.99]" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-bold text-label-bold">Agenda</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-bold text-label-bold">Calendar</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-bold text-label-bold">Users</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-label-bold text-label-bold">Reports</span>
+</a>
+</nav>
+<div class="p-lg border-t border-outline-variant">
+<button class="w-full bg-primary text-white py-sm rounded font-label-bold text-label-bold flex items-center justify-center gap-sm hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                Add New Agenda
+            </button>
+</div>
+</aside>
+<!-- TOP BAR -->
+<header class="fixed top-0 right-0 ml-sidebar_width w-[calc(100%-280px)] h-xl px-lg bg-surface-container-lowest border-b border-outline-variant z-30 flex justify-between items-center">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white border border-outline-variant rounded focus:border-primary focus:ring-0 text-body-md outline-none" placeholder="Cari kegiatan..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm cursor-pointer hover:opacity-80 transition-opacity">
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a male government official in a clean white uniform, sharp focus, professional office studio lighting, neutral slate background, high resolution photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuMr5mbmZmKC-Vnv9gJfKOjkoj2LLFkvi3JmcM_bhebm_-4klC0qGn3lUY3DcUCXielIejpL4IA3Q7akgjecs3_sl96G1r6wAC6_LQvOI1FENujzGCbX-v4inAhCQi67edV_-XR2emSVR8gYPBQLE0UE1euGFbEy7Ltjz1NsE6JeZAyXVrmVStzn1cEqG_537ahq9BKbBL6OHloHCl2zz7teypqENoeLPy0yHKv4W_oyxYF9ddJD25zcj5i3jFDVf7fT-jwYYAGBYf"/>
+<div class="text-right">
+<p class="font-label-bold text-label-bold">Admin SINORA</p>
+<p class="font-label-sm text-label-sm text-outline">NIP. 199208152014021001</p>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs font-label-bold text-label-bold">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout
+            </button>
+</div>
+</header>
+<!-- MAIN CONTENT -->
+<main class="ml-sidebar_width mt-xl p-lg min-h-screen">
+<div class="max-w-[1400px] mx-auto">
+<!-- HEADER SECTION -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<nav class="flex gap-xs text-label-sm text-outline mb-xs">
+<span>Management</span>
+<span>/</span>
+<span class="text-primary">Agenda List</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg">Manajemen Agenda</h2>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-sm border border-outline text-on-surface rounded font-label-bold text-label-bold hover:bg-surface-container-low transition-colors flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="file_download">file_download</span>
+                        Ekspor Data
+                    </button>
+<button class="px-md py-sm bg-primary text-white rounded font-label-bold text-label-bold hover:bg-primary-container transition-colors flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="add_circle">add_circle</span>
+                        Tambah Agenda
+                    </button>
+</div>
+</div>
+<!-- ASYMMETRIC GRID CANVAS -->
+<div class="asymmetric-grid">
+<!-- FILTER CARD (Spans 12 columns) -->
+<div class="col-span-12 bg-white border border-outline-variant p-md">
+<div class="flex flex-wrap items-center gap-md">
+<div class="flex-1 min-w-[200px]">
+<label class="block text-label-sm text-outline mb-xs uppercase tracking-wider">Date Range</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]" data-icon="calendar_month">calendar_month</span>
+<input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded font-label-bold text-label-bold outline-none focus:border-primary" type="text" value="01 Jan 2024 - 31 Jan 2024"/>
+</div>
+</div>
+<div class="w-48">
+<label class="block text-label-sm text-outline mb-xs uppercase tracking-wider">Division</label>
+<select class="w-full px-3 py-2 border border-outline-variant rounded font-label-bold text-label-bold outline-none focus:border-primary appearance-none bg-no-repeat bg-[right_10px_center]">
+<option>Semua Bidang</option>
+<option>Kamtib</option>
+<option>Binadik</option>
+<option>Giatja</option>
+<option>Umum</option>
+</select>
+</div>
+<div class="w-40">
+<label class="block text-label-sm text-outline mb-xs uppercase tracking-wider">Priority</label>
+<select class="w-full px-3 py-2 border border-outline-variant rounded font-label-bold text-label-bold outline-none focus:border-primary">
+<option>Semua</option>
+<option>Tinggi</option>
+<option>Sedang</option>
+<option>Rendah</option>
+</select>
+</div>
+<div class="w-40">
+<label class="block text-label-sm text-outline mb-xs uppercase tracking-wider">Status</label>
+<select class="w-full px-3 py-2 border border-outline-variant rounded font-label-bold text-label-bold outline-none focus:border-primary">
+<option>Semua Status</option>
+<option>Terlaksana</option>
+<option>Berjalan</option>
+<option>Dibatalkan</option>
+</select>
+</div>
+<div class="pt-5">
+<button class="bg-surface-container-highest text-primary px-lg py-2 rounded font-label-bold text-label-bold hover:brightness-95 transition-all">
+                                Terapkan Filter
+                            </button>
+</div>
+</div>
+</div>
+<!-- TABS (Spans 12 columns) -->
+<div class="col-span-12 mt-sm flex gap-sm">
+<button class="bg-primary text-white px-lg py-sm rounded-full font-label-bold text-label-bold flex items-center gap-xs">
+                        Agenda Hari Ini
+                        <span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px]">12</span>
+</button>
+<button class="bg-surface-container-low text-on-surface-variant px-lg py-sm rounded-full font-label-bold text-label-bold hover:bg-surface-container transition-colors">
+                        Agenda Mendatang
+                    </button>
+<button class="bg-surface-container-low text-on-surface-variant px-lg py-sm rounded-full font-label-bold text-label-bold hover:bg-surface-container transition-colors">
+                        Arsip Agenda
+                    </button>
+</div>
+<!-- MAIN LIST TABLE (Spans 9 columns) -->
+<div class="col-span-9 bg-white border border-outline-variant flex flex-col">
+<div class="p-md border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-body-lg font-bold">Daftar Agenda Aktif</h3>
+<div class="flex items-center gap-sm">
+<span class="text-label-sm text-outline">Menampilkan 1-10 dari 45 data</span>
+<div class="flex gap-xs">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded hover:bg-surface-container-low"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded hover:bg-surface-container-low"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-label-bold text-on-surface-variant uppercase tracking-widest text-[11px]">
+<th class="px-md py-4 border-b border-outline-variant w-12">No</th>
+<th class="px-md py-4 border-b border-outline-variant">Tanggal &amp; Waktu</th>
+<th class="px-md py-4 border-b border-outline-variant">Nama Kegiatan</th>
+<th class="px-md py-4 border-b border-outline-variant">Bidang / P.J</th>
+<th class="px-md py-4 border-b border-outline-variant">Lokasi</th>
+<th class="px-md py-4 border-b border-outline-variant">Status</th>
+<th class="px-md py-4 border-b border-outline-variant text-center">Aksi</th>
+</tr>
+</thead>
+<tbody class="text-body-md">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors border-b border-outline-variant">
+<td class="px-md py-4 text-outline">01</td>
+<td class="px-md py-4">
+<div class="font-bold">14 Feb 2024</div>
+<div class="text-label-sm text-outline">09:00 - 11:30 WIB</div>
+</td>
+<td class="px-md py-4 max-w-[200px]">
+<span class="font-semibold block truncate">Rapat Koordinasi Pengamanan Wilayah</span>
+</td>
+<td class="px-md py-4">
+<div class="text-on-surface">Kamtib</div>
+<div class="text-label-sm text-outline">Bp. Hendra S.</div>
+</td>
+<td class="px-md py-4">Ruang Aula Utama</td>
+<td class="px-md py-4">
+<span class="bg-[#fcd34d] text-[#78350f] px-sm py-xs rounded font-label-bold text-[10px] uppercase">Berjalan</span>
+</td>
+<td class="px-md py-4">
+<div class="flex justify-center gap-sm">
+<button class="w-8 h-8 flex items-center justify-center text-primary hover:bg-surface-container rounded" title="Detail"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-secondary hover:bg-surface-container rounded" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-error hover:bg-error-container/20 rounded" title="Hapus"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-surface-container-lowest hover:bg-surface-container-low transition-colors border-b border-outline-variant">
+<td class="px-md py-4 text-outline">02</td>
+<td class="px-md py-4">
+<div class="font-bold">14 Feb 2024</div>
+<div class="text-label-sm text-outline">13:30 - 15:00 WIB</div>
+</td>
+<td class="px-md py-4 max-w-[200px]">
+<span class="font-semibold block truncate">Penyuluhan Kesehatan Mental WBP</span>
+</td>
+<td class="px-md py-4">
+<div class="text-on-surface">Binadik</div>
+<div class="text-label-sm text-outline">Ibu Dr. Maya</div>
+</td>
+<td class="px-md py-4">Blok Hunian A</td>
+<td class="px-md py-4">
+<span class="bg-[#10b981] text-white px-sm py-xs rounded font-label-bold text-[10px] uppercase">Terlaksana</span>
+</td>
+<td class="px-md py-4">
+<div class="flex justify-center gap-sm">
+<button class="w-8 h-8 flex items-center justify-center text-primary hover:bg-surface-container rounded" title="Detail"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-secondary hover:bg-surface-container rounded" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-error hover:bg-error-container/20 rounded" title="Hapus"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors border-b border-outline-variant">
+<td class="px-md py-4 text-outline">03</td>
+<td class="px-md py-4">
+<div class="font-bold">14 Feb 2024</div>
+<div class="text-label-sm text-outline">16:00 - 17:00 WIB</div>
+</td>
+<td class="px-md py-4 max-w-[200px]">
+<span class="font-semibold block truncate">Inspeksi Sarana Prasarana Giatja</span>
+</td>
+<td class="px-md py-4">
+<div class="text-on-surface">Giatja</div>
+<div class="text-label-sm text-outline">Bp. Ridwan</div>
+</td>
+<td class="px-md py-4">Bengkel Kerja</td>
+<td class="px-md py-4">
+<span class="bg-[#f43f5e] text-white px-sm py-xs rounded font-label-bold text-[10px] uppercase">Dibatalkan</span>
+</td>
+<td class="px-md py-4">
+<div class="flex justify-center gap-sm">
+<button class="w-8 h-8 flex items-center justify-center text-primary hover:bg-surface-container rounded" title="Detail"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-secondary hover:bg-surface-container rounded" title="Edit"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="w-8 h-8 flex items-center justify-center text-error hover:bg-error-container/20 rounded" title="Hapus"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- SIDE INFO CARDS (Spans 3 columns) -->
+<div class="col-span-3 space-y-grid_gutter">
+<!-- Stats Card -->
+<div class="bg-white border border-outline-variant p-md">
+<h4 class="font-label-bold text-label-bold mb-md text-outline uppercase tracking-widest">Ringkasan Hari Ini</h4>
+<div class="space-y-md">
+<div class="flex justify-between items-center p-sm bg-surface-container-low">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-8 bg-primary rounded-full"></div>
+<span class="font-label-bold text-label-bold">Total Agenda</span>
+</div>
+<span class="text-headline-md font-extrabold text-primary">12</span>
+</div>
+<div class="flex justify-between items-center p-sm border border-outline-variant">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-8 bg-[#10b981] rounded-full"></div>
+<span class="font-label-bold text-label-bold">Selesai</span>
+</div>
+<span class="text-headline-md font-extrabold text-[#10b981]">08</span>
+</div>
+<div class="flex justify-between items-center p-sm border border-outline-variant">
+<div class="flex items-center gap-sm">
+<div class="w-2 h-8 bg-[#fcd34d] rounded-full"></div>
+<span class="font-label-bold text-label-bold">Berlangsung</span>
+</div>
+<span class="text-headline-md font-extrabold text-[#b45309]">04</span>
+</div>
+</div>
+</div>
+<!-- Calendar Mini Preview -->
+<div class="bg-white border border-outline-variant p-md">
+<div class="flex justify-between items-center mb-md">
+<h4 class="font-label-bold text-label-bold text-outline uppercase tracking-widest">Timeline Agenda</h4>
+<span class="material-symbols-outlined text-outline" data-icon="more_vert">more_vert</span>
+</div>
+<div class="relative pl-6 space-y-lg">
+<div class="absolute left-[7px] top-2 bottom-2 w-0.5 bg-outline-variant"></div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-primary border-4 border-white"></div>
+<p class="text-label-sm text-outline">09:00 WIB</p>
+<p class="font-label-bold text-label-bold leading-tight">Rakornas Keamanan Wilayah I</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-outline-variant border-4 border-white"></div>
+<p class="text-label-sm text-outline">13:30 WIB</p>
+<p class="font-label-bold text-label-bold leading-tight">Penyuluhan Medis Blok B</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-4 h-4 rounded-full bg-outline-variant border-4 border-white"></div>
+<p class="text-label-sm text-outline">15:00 WIB</p>
+<p class="font-label-bold text-label-bold leading-tight">Serah Terima Tugas Shift Sore</p>
+</div>
+</div>
+<button class="w-full mt-lg pt-md border-t border-dashed border-outline-variant text-primary font-label-bold text-label-sm hover:underline">
+                            Lihat Kalender Lengkap
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB for quick action (Conditional Suppression logic applied - but here for primary context) -->
+<button class="fixed bottom-lg right-lg w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-50">
+<span class="material-symbols-outlined text-[32px]" data-icon="add">add</span>
+</button>
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.style.transform = 'scale(0.98)';
+            });
+            el.addEventListener('mouseup', () => {
+                el.style.transform = '';
+            });
+            el.addEventListener('mouseleave', () => {
+                el.style.transform = '';
+            });
+        });
+
+        // Tab Switching Simulation
+        const tabs = document.querySelectorAll('main .col-span-12.flex button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('bg-primary', 'text-white');
+                    t.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+                });
+                tab.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+                tab.classList.add('bg-primary', 'text-white');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SINORA - Reports &amp; Export Module</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed": "#00164e",
+                    "surface": "#f8f9ff",
+                    "on-surface-variant": "#434655",
+                    "inverse-primary": "#b4c5ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface": "#0d1c2e",
+                    "primary-container": "#2563eb",
+                    "on-primary-container": "#eeefff",
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "secondary-fixed-dim": "#b6c4ff",
+                    "surface-container": "#e6eeff",
+                    "secondary-container": "#8fa7fe",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-container-low": "#eff4ff",
+                    "surface-variant": "#d5e3fc",
+                    "primary": "#004ac6",
+                    "surface-container-highest": "#d5e3fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#ccdbf3",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-surface": "#233144",
+                    "on-tertiary-container": "#ffede6",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "secondary": "#4059aa",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary": "#943700",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dce1ff",
+                    "background": "#f8f9ff",
+                    "outline": "#737686",
+                    "on-secondary-container": "#1d3989",
+                    "on-secondary-fixed-variant": "#264191",
+                    "on-background": "#0d1c2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sidebar_width": "280px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "grid_gutter": "20px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-bold": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-nav-indicator {
+            position: absolute;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #004ac6;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { margin: 0 !important; padding: 0 !important; width: 100% !important; box-shadow: none !important; border: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-sidebar_width bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col no-print">
+<div class="p-lg mb-md">
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary">SINORA</h1>
+<p class="font-label-bold text-label-bold text-outline opacity-70">Lapas Painan</p>
+</div>
+<nav class="flex-grow">
+<!-- Dashboard Tab -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-label-bold text-label-bold">Dashboard</span>
+</a>
+<!-- Agenda Tab -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">event_note</span>
+<span class="font-label-bold text-label-bold">Agenda</span>
+</a>
+<!-- Calendar Tab -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">calendar_today</span>
+<span class="font-label-bold text-label-bold">Calendar</span>
+</a>
+<!-- Users Tab -->
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">group</span>
+<span class="font-label-bold text-label-bold">Users</span>
+</a>
+<!-- Reports Tab (ACTIVE) -->
+<a class="relative flex items-center gap-md bg-surface-container text-primary border-l-4 border-primary py-md px-lg transition-all opacity-90 scale-[0.99]" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label-bold text-label-bold">Reports</span>
+</a>
+</nav>
+<div class="p-lg border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary py-sm px-md rounded font-label-bold text-label-bold hover:bg-on-primary-fixed-variant transition-colors">
+                Add New Agenda
+            </button>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 right-0 h-xl ml-sidebar_width w-[calc(100%-280px)] bg-surface-container-lowest border-b border-outline-variant z-30 flex justify-between items-center px-lg no-print">
+<div class="flex items-center gap-md flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-xl pr-md py-xs focus:border-primary focus:ring-0 text-body-md" placeholder="Search reports..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-sm mr-md">
+<div class="text-right">
+<p class="font-label-bold text-label-bold text-on-surface leading-tight">Admin Lapas</p>
+<p class="font-label-sm text-label-sm text-outline leading-tight">19880101XXXXXXXX</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of an Indonesian correctional officer in a formal blue uniform, clean-shaved with a serious but approachable expression. The background is a soft-focus office setting with Indonesian flags and institutional emblems, lit with bright, neutral daylight-style lighting for a clean, administrative look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDET1ciBsmnLJK5DK5zYZliF6lsZ87PVr4cOKB-aFferBW9f4Q9LUkHeB_tGTr7JfN2LBcMEeVkROWFpIdisuUvnwmn0sBDN7sErp0wnNx209Mu9E3sSx_xegclK17-n-PVVBshDnP6kkIgz9uBHirXhCtUoAW5EDI1dU2Q78FI7H3EA3ojF2Jdq5CVD36RkC8GBdAqAa9wXpGkV2UUX1Gl5SpYmOl0LXO3G2Qo6826YexLj1hK_HjqGfljAnkJNUpMbxDe6_al2FMy"/>
+</div>
+</div>
+<button class="text-on-surface-variant font-label-bold text-label-bold hover:text-primary transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar_width pt-xl p-lg bg-background">
+<div class="max-w-6xl mx-auto space-y-lg">
+<!-- Page Header -->
+<div class="flex justify-between items-end no-print">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Reports &amp; Export</h2>
+<p class="text-on-surface-variant font-body-md mt-xs">Generate and preview official institution reports.</p>
+</div>
+<div class="flex gap-md">
+<button class="flex items-center gap-sm bg-[#107c41] text-white py-sm px-lg rounded font-label-bold text-label-bold hover:brightness-95 transition-all active:scale-95">
+<span class="material-symbols-outlined">table_view</span>
+                        Export to Excel
+                    </button>
+<button class="flex items-center gap-sm bg-primary text-on-primary py-sm px-lg rounded font-label-bold text-label-bold hover:bg-on-primary-fixed-variant transition-all active:scale-95" onclick="window.print()">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+                        Export to PDF
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Layout for Filters and Preview -->
+<div class="grid grid-cols-12 gap-grid_gutter">
+<!-- Filter Section (3 columns) -->
+<div class="col-span-12 lg:col-span-3 space-y-md no-print">
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded shadow-sm">
+<h3 class="font-label-bold text-label-bold border-b border-outline-variant pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">filter_list</span>
+                            REPORT FILTERS
+                        </h3>
+<div class="space-y-md">
+<div>
+<label class="block font-label-sm text-label-sm text-outline mb-xs">Date Range</label>
+<div class="space-y-sm">
+<input class="w-full bg-white border border-outline-variant rounded p-sm text-body-md focus:border-primary focus:ring-0" type="date"/>
+<p class="text-center font-label-sm text-outline">to</p>
+<input class="w-full bg-white border border-outline-variant rounded p-sm text-body-md focus:border-primary focus:ring-0" type="date"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-outline mb-xs">Report Category</label>
+<select class="w-full bg-white border border-outline-variant rounded p-sm text-body-md focus:border-primary focus:ring-0">
+<option>Agenda Bulanan</option>
+<option>Rekapitulasi Pengunjung</option>
+<option>Laporan Keamanan</option>
+<option>Kegiatan Pembinaan</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-outline mb-xs">Officer In Charge</label>
+<select class="w-full bg-white border border-outline-variant rounded p-sm text-body-md focus:border-primary focus:ring-0">
+<option>All Officers</option>
+<option>Budi Santoso</option>
+<option>Siti Aminah</option>
+</select>
+</div>
+<button class="w-full mt-md bg-surface-container-highest text-primary border border-primary/20 py-sm rounded font-label-bold text-label-bold hover:bg-surface-container-high transition-colors">
+                                Apply Filters
+                            </button>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md rounded shadow-sm">
+<h3 class="font-label-bold text-label-bold border-b border-outline-variant pb-sm mb-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">info</span>
+                            QUICK STATS
+                        </h3>
+<div class="grid grid-cols-2 gap-sm">
+<div class="p-sm bg-surface-container rounded border border-outline-variant/30">
+<p class="text-[10px] uppercase font-bold text-outline">Total Events</p>
+<p class="text-headline-md font-bold text-primary">124</p>
+</div>
+<div class="p-sm bg-surface-container rounded border border-outline-variant/30">
+<p class="text-[10px] uppercase font-bold text-outline">Exported</p>
+<p class="text-headline-md font-bold text-primary">12</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Print Preview Section (9 columns) -->
+<div class="col-span-12 lg:col-span-9">
+<div class="bg-white border border-outline-variant shadow-lg rounded print-area overflow-hidden">
+<!-- Official Letterhead (Kop Surat) -->
+<div class="p-xl border-b-[3px] border-on-surface">
+<div class="flex items-center gap-lg">
+<div class="w-24 h-24 flex-shrink-0">
+<img class="w-full h-full object-contain" data-alt="A clean, high-resolution graphic emblem of the Indonesian Ministry of Law and Human Rights (Kemenkumham), featuring a golden eagle and symbolic patterns. The logo is rendered in a sharp, professional style against a pure white background, suitable for an official government letterhead document, lit brightly and clearly." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfTn7OdTT_0rbnqbZj-2arncsKOvgIJ3dVTbx9bpzOqE8OMopQjk8ppyZVBwo5bocygLG-IAB_cJqYtVJa5BMLh2-_4N9mZKlMGkiKJzHjM20wPb7AQ5cDgud_IjFWfsstH3IoURkEcE47uZN4mH8BwmwaSxQOYUHEspsnPq8HjbrRvg7_wZWr0M0NpWzxBPhjpNGoq1rfh25gFp76cxM4gY2H3yxbDw5cYRN3A6F8vezGIeiMlp2ZmiKjnlw6Fep-3g4s5wKeBk"/>
+</div>
+<div class="text-center flex-1 pr-24">
+<h4 class="text-body-lg font-bold uppercase leading-tight">KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA R.I.</h4>
+<h4 class="text-body-lg font-bold uppercase leading-tight">KANTOR WILAYAH SUMATERA BARAT</h4>
+<h4 class="text-headline-md font-extrabold uppercase leading-tight">LEMBAGA PEMASYARAKATAN KELAS IIB PAINAN</h4>
+<p class="text-label-sm text-on-surface mt-sm">Jalan Sutan Syahrir No. 12, Painan, Pesisir Selatan</p>
+<p class="text-label-sm text-on-surface">Telepon: (0756) 21014 | Website: lapaspainan.kemenkumham.go.id</p>
+</div>
+</div>
+</div>
+<!-- Report Body -->
+<div class="p-xl space-y-lg">
+<div class="text-center">
+<h3 class="text-body-lg font-bold underline decoration-2 underline-offset-4 uppercase">LAPORAN REKAPITULASI AGENDA BULANAN</h3>
+<p class="text-label-bold mt-xs">Periode: 01 Oktober 2023 s/d 31 Oktober 2023</p>
+</div>
+<!-- Asymmetric Card / Table Alternative -->
+<div class="space-y-sm">
+<div class="grid grid-cols-12 bg-on-surface text-white p-sm font-label-bold text-center uppercase tracking-wider">
+<div class="col-span-1">No</div>
+<div class="col-span-2 text-left px-md">Tanggal</div>
+<div class="col-span-5 text-left px-md">Nama Kegiatan</div>
+<div class="col-span-2">Kategori</div>
+<div class="col-span-2">Status</div>
+</div>
+<!-- Table Rows with alternating colors as per design system -->
+<div class="grid grid-cols-12 bg-white p-sm border-b border-outline-variant/30 text-body-md items-center">
+<div class="col-span-1 text-center">1</div>
+<div class="col-span-2 px-md">02 Oct 2023</div>
+<div class="col-span-5 px-md font-bold">Rapat Koordinasi Keamanan Wilayah</div>
+<div class="col-span-2 text-center text-label-sm">Keamanan</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-[#10b981] text-white text-[10px] px-sm py-xs rounded font-bold uppercase">Selesai</span>
+</div>
+</div>
+<div class="grid grid-cols-12 bg-[#F8FAFC] p-sm border-b border-outline-variant/30 text-body-md items-center">
+<div class="col-span-1 text-center">2</div>
+<div class="col-span-2 px-md">05 Oct 2023</div>
+<div class="col-span-5 px-md font-bold">Pemeriksaan Rutin Blok Hunian A &amp; B</div>
+<div class="col-span-2 text-center text-label-sm">Keamanan</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-[#10b981] text-white text-[10px] px-sm py-xs rounded font-bold uppercase">Selesai</span>
+</div>
+</div>
+<div class="grid grid-cols-12 bg-white p-sm border-b border-outline-variant/30 text-body-md items-center">
+<div class="col-span-1 text-center">3</div>
+<div class="col-span-2 px-md">12 Oct 2023</div>
+<div class="col-span-5 px-md font-bold">Kunjungan Kerja Kakanwil Sumbar</div>
+<div class="col-span-2 text-center text-label-sm">Protokol</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-[#f59e0b] text-white text-[10px] px-sm py-xs rounded font-bold uppercase">Tertunda</span>
+</div>
+</div>
+<div class="grid grid-cols-12 bg-[#F8FAFC] p-sm border-b border-outline-variant/30 text-body-md items-center">
+<div class="col-span-1 text-center">4</div>
+<div class="col-span-2 px-md">15 Oct 2023</div>
+<div class="col-span-5 px-md font-bold">Pelatihan Kemandirian WBP (Pertanian)</div>
+<div class="col-span-2 text-center text-label-sm">Pembinaan</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-[#10b981] text-white text-[10px] px-sm py-xs rounded font-bold uppercase">Selesai</span>
+</div>
+</div>
+<div class="grid grid-cols-12 bg-white p-sm border-b border-outline-variant/30 text-body-md items-center">
+<div class="col-span-1 text-center">5</div>
+<div class="col-span-2 px-md">28 Oct 2023</div>
+<div class="col-span-5 px-md font-bold">Upacara Peringatan Hari Sumpah Pemuda</div>
+<div class="col-span-2 text-center text-label-sm">Protokol</div>
+<div class="col-span-2 flex justify-center">
+<span class="bg-[#10b981] text-white text-[10px] px-sm py-xs rounded font-bold uppercase">Selesai</span>
+</div>
+</div>
+</div>
+<!-- Official Footer / Signatures -->
+<div class="mt-xl flex justify-end">
+<div class="text-center w-72 space-y-xl">
+<div>
+<p class="text-body-md">Painan, 31 Oktober 2023</p>
+<p class="text-body-md font-bold">Kepala Lapas Kelas IIB Painan,</p>
+</div>
+<div class="h-24">
+<!-- Space for Stamp and Signature -->
+</div>
+<div>
+<p class="text-body-md font-bold underline">NAMA KEPALA LAPAS, Bc.IP., S.H.</p>
+<p class="text-body-md">NIP. 19750505 199803 1 001</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Document Footer -->
+<div class="bg-surface-container p-sm text-center border-t border-outline-variant/30">
+<p class="text-[10px] text-outline font-label-bold uppercase tracking-widest">Dokumen ini dihasilkan secara otomatis melalui Sistem Informasi Agenda Lapas Painan (SINORA)</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Atmosphere Elements -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-30 no-print">
+
+</div>
+<script>
+        // Micro-interaction for active state scaling
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.classList.add('scale-[0.98]');
+            });
+            el.addEventListener('mouseup', () => {
+                el.classList.remove('scale-[0.98]');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('scale-[0.98]');
+            });
+        });
+
+        // Simulating loading filtered data
+        const filterButton = document.querySelector('button:contains("Apply Filters")');
+        if(filterButton) {
+            filterButton.addEventListener('click', () => {
+                const preview = document.querySelector('.print-area');
+                preview.style.opacity = '0.5';
+                setTimeout(() => {
+                    preview.style.opacity = '1';
+                }, 600);
+            });
+        }
+    </script>
+</body></html>

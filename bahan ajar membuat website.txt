@@ -1,0 +1,94 @@
+================================================================================
+BAHAN AJAR: PANDUAN DASAR MEMBUAT WEBSITE DAN SISTEM OMAH (UNTUK PEMULA)
+Studi Kasus: Pembuatan Aplikasi Agenda Lapas Painan (SINORA)
+================================================================================
+
+PENDAHULUAN
+Bagi pemula, membuat aplikasi web sering kali terdengar rumit. Namun, dengan 
+memahami konsep dasarnya dan memanfaatkan teknologi modern (termasuk AI), 
+siapa saja dapat membangun aplikasi web yang profesional dan otomatis terpublikasi 
+ke internet.
+
+Bahan ajar ini merangkum proses pembuatan aplikasi dari nol berdasarkan alur 
+kerja nyata yang telah kita lakukan.
+
+================================================================================
+MODUL 1: MEMAHAMI ATURAN & KEBUTUHAN APLIKASI
+================================================================================
+Sebelum mengetik kode atau mendesain, langkah pertama adalah menentukan alur kerja 
+dan aturan aplikasi.
+
+Contoh Kasus pada SINORA:
+1. Tidak Menggunakan Login Google: Aplikasi internal institusi sering kali 
+   membutuhkan kontrol penuh atas akun. Login tidak menggunakan Google Sign-In, 
+   melainkan akun resmi yang dibuat secara manual oleh Admin.
+2. Menangani Login ID / Username Tanpa Email Asli:
+   - Kebanyakan sistem database (seperti Firebase) membutuhkan format email 
+     (contoh: nama@domain.com).
+   - Solusi Praktis untuk Pemula: Pengguna cukup mengetik ID (contoh: glubis). 
+     Di belakang layar, sistem otomatis mengubahnya menjadi "glubis@sinora.internal". 
+     Dengan begitu, pengguna tidak perlu memiliki email asli aktif.
+
+================================================================================
+MODUL 2: MENERAPKAN DATABASE DAN OTENTIKASI (FIREBASE)
+================================================================================
+Database adalah tempat menyimpan data aplikasi (seperti akun pengguna dan agenda).
+
+Langkah-langkah Inisialisasi Database:
+1. Membuat Proyek di Firebase Console:
+   - Buka firebase.google.com.
+   - Buat proyek baru dan dapatkan Kode Konfigurasi (SDK Firebase).
+2. Mengaktifkan Layanan Kunci:
+   - Authentication: Aktifkan metode Email/Password.
+   - Database (Firestore): Buat database untuk menyimpan data kegiatan.
+   - Hosting: Aktifkan tempat menyimpan/menayangkan website di internet.
+3. Menambahkan Akun Pertama (Admin):
+   - Tambahkan pengguna pertama di Firebase Console (contoh: glubis@sinora.internal).
+
+================================================================================
+MODUL 3: OTOMATISASI PUBLIKASI (CI/CD DENGAN GITHUB & FIREBASE HOSTING)
+================================================================================
+Agar setiap perubahan kode yang kita buat langsung tayang secara otomatis di 
+alamat website (contoh: sinoralapaspainan.web.app), kita menggunakan alur CI/CD 
+(Continuous Integration / Continuous Deployment).
+
+Alur Kerjanya:
+1. GitHub (Tempat Menyimpan Kode):
+   - Setiap kali kode diperbarui, kita mengirimkannya (push) ke GitHub.
+2. GitHub Actions (Tukang Masak / Builder Otomatis):
+   - GitHub Actions akan otomatis mendeteksi kode baru.
+   - Menjalankan proses pengujian (build) dan mengunggah aplikasi ke Firebase.
+3. Kunci Rahasia (Repository Secrets):
+   - Agar GitHub diizinkan mengunggah kode ke Firebase Anda, kita memasukkan 
+     "Private Service Account Key" (file JSON dari Firebase) ke menu Settings > 
+     Secrets di GitHub.
+
+================================================================================
+MODUL 4: MENINGKATKAN KUALITAS DESAIN UI DENGAN PROMPT AI
+================================================================================
+Untuk membuat tampilan aplikasi (UI) yang disukai pengguna dan tidak terlihat 
+"kaku" atau berlebihan khas buatan AI standar:
+
+Aturan Desain Profesional (Corporate Minimalist):
+1. Hindari efek berlebihan: Jangan gunakan neon glow berlebihan atau efek kaca 
+   (glassmorphism) yang membuat tulisan sulit dibaca.
+2. Gunakan Warna Solid & Berstruktur:
+   - Warna Utama: Biru Gelap Institusi / Deep Navy (#1E3A8A)
+   - Warna Latar: Off-White Bersih (#F8FAFC)
+   - Warna Status (Solid): Hijau (Selesai), Oranye (Proses), Merah (Penting).
+3. Struktur Halaman yang Lengkap:
+   - Halaman Login ID
+   - Dashboard Ringkasan Agenda
+   - Tabel Data Kegiatan (Bisa Tambah, Edit, Hapus)
+   - Tampilan Kalender Bulanan
+   - Manajemen Akun Petugas oleh Admin
+   - Fitur Cetak Laporan / PDF
+
+================================================================================
+RINGKASAN ISTILAH PENTING UNTUK PEMULA
+================================================================================
+- Frontend: Tampilan visual website yang dilihat dan diklik oleh pengguna.
+- Backend / Firebase: Mesin belakang layar yang menyimpan data dan memeriksa password.
+- Repository (GitHub): Wadah/folder penyimpanan kode proyek secara online.
+- Deployment: Proses menerbitkan aplikasi dari komputer lokal ke web publik.
+================================================================================

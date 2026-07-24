@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SINORA | User &amp; Officer Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed": "#00164e",
+                    "surface": "#f8f9ff",
+                    "on-surface-variant": "#434655",
+                    "inverse-primary": "#b4c5ff",
+                    "on-primary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-surface": "#0d1c2e",
+                    "primary-container": "#2563eb",
+                    "on-primary-container": "#eeefff",
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "secondary-fixed-dim": "#b6c4ff",
+                    "surface-container": "#e6eeff",
+                    "secondary-container": "#8fa7fe",
+                    "on-tertiary-fixed": "#360f00",
+                    "surface-container-low": "#eff4ff",
+                    "surface-variant": "#d5e3fc",
+                    "primary": "#004ac6",
+                    "surface-container-highest": "#d5e3fc",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#ccdbf3",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "inverse-surface": "#233144",
+                    "on-tertiary-container": "#ffede6",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "secondary": "#4059aa",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "primary-fixed": "#dbe1ff",
+                    "tertiary": "#943700",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#dce1ff",
+                    "background": "#f8f9ff",
+                    "outline": "#737686",
+                    "on-secondary-container": "#1d3989",
+                    "on-secondary-fixed-variant": "#264191",
+                    "on-background": "#0d1c2e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "sidebar_width": "280px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "unit": "4px",
+                    "grid_gutter": "20px",
+                    "xl": "40px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-bold": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9ff;
+            color: #0d1c2e;
+        }
+        .modal-overlay {
+            background-color: rgba(13, 28, 46, 0.4);
+            backdrop-filter: blur(2px);
+        }
+        .asymmetric-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        /* Custom scrollbar for professional look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-screen w-sidebar_width z-40 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant">
+<div class="p-lg flex items-center gap-sm">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-extrabold text-primary">SINORA</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Lapas Painan</p>
+</div>
+</div>
+<nav class="flex-1 mt-md">
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-bold text-label-bold">Dashboard</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-label-bold text-label-bold">Agenda</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-bold text-label-bold">Calendar</span>
+</a>
+<a class="flex items-center gap-md bg-surface-container text-primary border-l-4 border-primary py-md px-lg opacity-90 scale-[0.99] transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-bold text-label-bold">Users</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant py-md px-lg hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label-bold text-label-bold">Reports</span>
+</a>
+</nav>
+<div class="p-lg">
+<button class="w-full bg-primary text-on-primary font-label-bold text-label-bold py-md rounded transition-all hover:bg-on-primary-fixed-variant active:scale-[0.98]" onclick="openModal()">
+                + Buat Akun Baru
+            </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-xl px-lg ml-sidebar_width w-[calc(100%-280px)] z-30 fixed top-0 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded focus:border-primary focus:ring-0 text-label-sm font-label-sm" placeholder="Cari petugas atau NIP..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-sm">
+<div class="text-right">
+<p class="font-label-bold text-label-bold text-on-surface leading-tight">Admin Utama</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">198801012010121001</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a high-ranking Indonesian correctional officer in a sharp blue uniform. The background is a clean, minimalist administrative office with soft daylight and professional office aesthetics. The officer has a disciplined yet approachable expression, fitting a leadership role in a modern security institution. Lighting is high-key and authoritative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoH4GhQv0vEak4MT_icbj6TR_DnndTLNLfsdQi8yiiDiTPLPz1IZql_p-DhdEJIdeQYugtSX_G4MD-AYXk8JZnYOHhotBlj5iWliyEC2xSuuveEFLK7DD6lP4RNudw7wPdI-c6cieU3gFUPmtuft00MUSmB_g7binh1QQ4j_UQ_52euUiBkhw6GugKgEmPOZFv0GpGIX7hUTkWok6UOw68f5O1dQfzFrcwkEvWW31T59vo_iiodf_FI5ORpEkmg7iK1nT-1KSqkrbP"/>
+</div>
+</div>
+<button class="flex items-center gap-xs font-label-bold text-label-bold text-on-surface-variant hover:text-error transition-colors">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar_width pt-xl min-h-screen p-lg">
+<div class="max-w-7xl mx-auto mt-md">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Manajemen Petugas</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Kelola hak akses dan informasi personel Lapas Painan.</p>
+</div>
+<div class="flex gap-sm">
+<button class="bg-surface-container-lowest border border-outline-variant px-md py-sm font-label-bold text-label-bold text-on-surface flex items-center gap-sm hover:bg-surface-container-low">
+<span class="material-symbols-outlined">filter_list</span> Filter
+                    </button>
+<button class="bg-surface-container-lowest border border-outline-variant px-md py-sm font-label-bold text-label-bold text-on-surface flex items-center gap-sm hover:bg-surface-container-low">
+<span class="material-symbols-outlined">download</span> Export CSV
+                    </button>
+</div>
+</div>
+<!-- Asymmetric Grid Content -->
+<div class="asymmetric-grid">
+<!-- Summary Stats (Span 4) -->
+<div class="col-span-4 flex flex-col gap-md">
+<div class="bg-surface-container-lowest border border-outline-variant p-md">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant border-b border-outline-variant pb-xs mb-md">STATUS PERSONEL</h3>
+<div class="flex justify-between items-center mb-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Petugas</span>
+<span class="font-headline-md text-headline-md text-primary">128</span>
+</div>
+<div class="flex justify-between items-center mb-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Akun Aktif</span>
+<span class="font-headline-md text-headline-md text-primary">112</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full mt-md overflow-hidden">
+<div class="bg-primary h-full" style="width: 87%;"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-md">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant border-b border-outline-variant pb-xs mb-md">DISTRIBUSI PERAN</h3>
+<div class="space-y-md">
+<div class="flex items-center gap-md">
+<div class="w-2 h-8 bg-primary"></div>
+<div>
+<p class="font-label-bold text-label-bold">Admin Sistem</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">4 Personel</p>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="w-2 h-8 bg-secondary-container"></div>
+<div>
+<p class="font-label-bold text-label-bold">Officer / Petugas Lapangan</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">124 Personel</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Table Area (Span 8) -->
+<div class="col-span-8 bg-surface-container-lowest border border-outline-variant overflow-hidden">
+<div class="p-md border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant uppercase tracking-wider">Daftar Petugas Aktif</h3>
+<span class="bg-surface-container px-sm py-xs font-label-sm text-label-sm rounded text-primary">Menampilkan 12 Petugas Terbaru</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-md py-sm font-label-bold text-label-bold text-on-surface-variant">ID USER / NIP</th>
+<th class="px-md py-sm font-label-bold text-label-bold text-on-surface-variant">NAMA LENGKAP</th>
+<th class="px-md py-sm font-label-bold text-label-bold text-on-surface-variant">ROLE</th>
+<th class="px-md py-sm font-label-bold text-label-bold text-on-surface-variant">DIVISI</th>
+<th class="px-md py-sm font-label-bold text-label-bold text-on-surface-variant">STATUS</th>
+<th class="px-md py-sm"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-surface-container-lowest hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-md font-label-sm text-label-sm">199204052015031001</td>
+<td class="px-md py-md font-label-bold text-label-bold">Budi Raharjo</td>
+<td class="px-md py-md">
+<span class="bg-primary-container text-on-primary-container px-sm py-1 font-label-sm text-label-sm rounded uppercase">Admin</span>
+</td>
+<td class="px-md py-md font-label-sm text-label-sm">KAMTIB</td>
+<td class="px-md py-md">
+<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+<span class="font-label-sm text-label-sm text-green-700">Aktif</span>
+</td>
+<td class="px-md py-md text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+<tr class="bg-surface-container-low hover:bg-surface-container transition-colors group">
+<td class="px-md py-md font-label-sm text-label-sm">199508122018012003</td>
+<td class="px-md py-md font-label-bold text-label-bold">Siti Aminah</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container text-on-secondary-container px-sm py-1 font-label-sm text-label-sm rounded uppercase">Officer</span>
+</td>
+<td class="px-md py-md font-label-sm text-label-sm">Pelayanan Tahanan</td>
+<td class="px-md py-md">
+<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+<span class="font-label-sm text-label-sm text-green-700">Aktif</span>
+</td>
+<td class="px-md py-md text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-md font-label-sm text-label-sm">198901202012031002</td>
+<td class="px-md py-md font-label-bold text-label-bold">Agus Setiawan</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container text-on-secondary-container px-sm py-1 font-label-sm text-label-sm rounded uppercase">Officer</span>
+</td>
+<td class="px-md py-md font-label-sm text-label-sm">KPLP</td>
+<td class="px-md py-md">
+<span class="inline-block w-2 h-2 rounded-full bg-error mr-2"></span>
+<span class="font-label-sm text-label-sm text-error">Suspend</span>
+</td>
+<td class="px-md py-md text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+<tr class="bg-surface-container-low hover:bg-surface-container transition-colors group">
+<td class="px-md py-md font-label-sm text-label-sm">199711032020031001</td>
+<td class="px-md py-md font-label-bold text-label-bold">Dedi Kurniawan</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container text-on-secondary-container px-sm py-1 font-label-sm text-label-sm rounded uppercase">Officer</span>
+</td>
+<td class="px-md py-md font-label-sm text-label-sm">Administrasi Umum</td>
+<td class="px-md py-md">
+<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+<span class="font-label-sm text-label-sm text-green-700">Aktif</span>
+</td>
+<td class="px-md py-md text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+<tr class="bg-surface-container-lowest hover:bg-surface-container-low transition-colors group">
+<td class="px-md py-md font-label-sm text-label-sm">199302142017032001</td>
+<td class="px-md py-md font-label-bold text-label-bold">Rina Melati</td>
+<td class="px-md py-md">
+<span class="bg-secondary-container text-on-secondary-container px-sm py-1 font-label-sm text-label-sm rounded uppercase">Officer</span>
+</td>
+<td class="px-md py-md font-label-sm text-label-sm">KAMTIB</td>
+<td class="px-md py-md">
+<span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+<span class="font-label-sm text-label-sm text-amber-700">Cuti</span>
+</td>
+<td class="px-md py-md text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-md border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 1 to 5 of 128 entries</span>
+<div class="flex gap-xs">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant bg-surface-container-lowest disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center border border-primary bg-primary text-on-primary font-label-bold text-label-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant bg-surface-container-lowest font-label-bold text-label-bold hover:bg-surface-container">2</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant bg-surface-container-lowest font-label-bold text-label-bold hover:bg-surface-container">3</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant bg-surface-container-lowest">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Account Creation Modal -->
+<div class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300" id="accountModal">
+<div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+<div class="relative w-full max-w-lg bg-surface-container-lowest border border-outline shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+<!-- Modal Header -->
+<div class="bg-primary p-lg flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-primary">Buat Akun Baru</h3>
+<button class="text-on-primary hover:rotate-90 transition-transform" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<form class="p-lg space-y-md" id="newAccountForm">
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface uppercase tracking-tight">Username / ID</label>
+<input class="w-full border border-outline focus:border-primary focus:ring-0 rounded bg-white font-body-md py-sm px-md" placeholder="Contoh: budi_kamtib" type="text"/>
+</div>
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface uppercase tracking-tight">NIP Petugas</label>
+<input class="w-full border border-outline focus:border-primary focus:ring-0 rounded bg-white font-body-md py-sm px-md" placeholder="18 digit angka" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface uppercase tracking-tight">Nama Lengkap</label>
+<input class="w-full border border-outline focus:border-primary focus:ring-0 rounded bg-white font-body-md py-sm px-md" placeholder="Sesuai SK Kepegawaian" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface uppercase tracking-tight">Assign Role</label>
+<select class="w-full border border-outline focus:border-primary focus:ring-0 rounded bg-white font-body-md py-sm px-md">
+<option value="">Pilih Peran...</option>
+<option value="admin">Administrator</option>
+<option value="officer">Officer (Petugas Lapangan)</option>
+<option value="viewer">Viewer (Monitoring)</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface uppercase tracking-tight">Divisi Kerja</label>
+<select class="w-full border border-outline focus:border-primary focus:ring-0 rounded bg-white font-body-md py-sm px-md">
+<option value="">Pilih Divisi...</option>
+<option value="kamtib">KAMTIB</option>
+<option value="kplp">KPLP</option>
+<option value="yanan">Pelayanan Tahanan</option>
+<option value="umum">Umum</option>
+</select>
+</div>
+</div>
+<div class="pt-md mt-lg border-t border-outline-variant">
+<div class="flex items-center justify-between gap-md mb-md">
+<div class="flex-1">
+<p class="font-label-bold text-label-bold text-on-surface">Password Keamanan</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Generate otomatis untuk keamanan maksimal.</p>
+</div>
+<button class="bg-surface-container text-primary font-label-bold text-label-bold py-sm px-md border border-primary hover:bg-surface-container-high transition-colors" onclick="generatePassword()" type="button">
+                            Generate
+                        </button>
+</div>
+<div class="bg-surface-container-low border-2 border-dashed border-outline-variant p-md text-center font-mono text-lg font-bold tracking-widest text-on-surface hidden" id="passwordDisplay">
+                        SINORA-XXXX-2024
+                    </div>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-end gap-md pt-lg">
+<button class="px-lg py-sm font-label-bold text-label-bold text-on-surface-variant hover:text-on-surface transition-colors" onclick="closeModal()" type="button">Batal</button>
+<button class="px-xl py-sm bg-primary text-on-primary font-label-bold text-label-bold hover:bg-on-primary-fixed-variant transition-all active:scale-95 shadow-lg" type="submit">Simpan &amp; Aktifkan Akun</button>
+</div>
+</form>
+</div>
+</div>
+<script>
+        function openModal() {
+            const modal = document.getElementById('accountModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('.transform').classList.remove('scale-95');
+            modal.querySelector('.transform').classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('accountModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+        }
+
+        function generatePassword() {
+            const passDisplay = document.getElementById('passwordDisplay');
+            const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            passDisplay.textContent = `SINORA-${randomCode}-2024`;
+            passDisplay.classList.remove('hidden');
+            
+            // Subtle flash effect
+            passDisplay.classList.add('bg-surface-container-high');
+            setTimeout(() => {
+                passDisplay.classList.remove('bg-surface-container-high');
+            }, 200);
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Form submission prevent default
+        document.getElementById('newAccountForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Akun petugas sedang diproses dalam sistem SINORA...');
+            closeModal();
+        });
+    </script>
+</body></html>

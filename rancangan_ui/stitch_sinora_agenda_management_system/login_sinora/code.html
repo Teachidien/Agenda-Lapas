@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - SINORA Agenda System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        h1, h2, h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .asymmetric-bg {
+            background-color: #f8f9ff;
+            background-image: radial-gradient(at 0% 0%, #e6eeff 0, transparent 50%), 
+                              radial-gradient(at 100% 100%, #d5e3fc 0, transparent 50%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c3c6d7",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-secondary-fixed": "#00164e",
+                        "surface": "#f8f9ff",
+                        "on-surface-variant": "#434655",
+                        "inverse-primary": "#b4c5ff",
+                        "on-primary-fixed": "#00174b",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-surface": "#0d1c2e",
+                        "primary-container": "#2563eb",
+                        "on-primary-container": "#eeefff",
+                        "surface-container-high": "#dce9ff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "secondary-fixed-dim": "#b6c4ff",
+                        "surface-container": "#e6eeff",
+                        "secondary-container": "#8fa7fe",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-low": "#eff4ff",
+                        "surface-variant": "#d5e3fc",
+                        "primary": "#004ac6",
+                        "surface-container-highest": "#d5e3fc",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#ccdbf3",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "inverse-surface": "#233144",
+                        "on-tertiary-container": "#ffede6",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary": "#4059aa",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-container": "#bc4800",
+                        "primary-fixed": "#dbe1ff",
+                        "tertiary": "#943700",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#dce1ff",
+                        "background": "#f8f9ff",
+                        "outline": "#737686",
+                        "on-secondary-container": "#1d3989",
+                        "on-secondary-fixed-variant": "#264191",
+                        "on-background": "#0d1c2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "sidebar_width": "280px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "unit": "4px",
+                        "grid_gutter": "20px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-bold": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "label-bold": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="asymmetric-bg min-h-screen flex items-center justify-center p-md">
+<!-- Main Authentication Container -->
+<main class="w-full max-w-[440px] z-10">
+<!-- Login Card -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-none p-xl flex flex-col gap-lg rounded-none">
+<!-- Header Section -->
+<header class="flex flex-col items-center text-center gap-md">
+<div class="w-20 h-20 bg-surface-container-low flex items-center justify-center border border-outline-variant">
+<img class="w-16 h-16 object-contain" data-alt="A professional government agency logo for Lapas Painan, featuring a classic Indonesian institutional emblem. The design is presented in a crisp, clean-cut professional style with deep navy and gold accents, set against a pristine white background. The lighting is neutral and even, emphasizing authority and administrative clarity in a modern institutional setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9uuq1mJySR7jmqc8u8-Hv12mU5iwhc8dKITi9oyrZfWSwBzhHTyz5R_3hHggA4JaV0xE8Z4o-BAifJc_4P5U_QTTAARHohxFb2gn3MrB3FaRLposn5HQj68tm5r0He1IRSeNw9eE_yYIBEFqJSt_ckr3ttxt-eIcUDmPuM1mUY4BMAIMm6Mjw84Ky3n0lM4JhnS1x_vTbWFRBVaqAeFR6ZBRskdmCcw40etaqXBhTWf2oX50TL5WhaSWQhMdzbToYQo7QEE4GMPYT"/>
+</div>
+<div class="space-y-xs">
+<h1 class="font-headline-md text-headline-md text-on-surface">
+                        SINORA
+                    </h1>
+<p class="font-label-bold text-label-bold text-primary tracking-widest uppercase">
+                        Agenda System
+                    </p>
+</div>
+</header>
+<!-- Login Form -->
+<form action="#" class="flex flex-col gap-md" method="POST">
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface-variant" for="nip">
+                        ID USER / NIP
+                    </label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">
+                            badge
+                        </span>
+<input class="w-full bg-surface-container-lowest border border-outline px-xl py-md font-body-md text-body-md focus:border-primary focus:ring-0 focus:border-2 outline-none transition-all pl-[52px]" id="nip" name="nip" placeholder="Masukkan NIP Anda" required="" type="text"/>
+</div>
+</div>
+<div class="space-y-xs">
+<label class="font-label-bold text-label-bold text-on-surface-variant" for="password">
+                        PASSWORD
+                    </label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">
+                            lock
+                        </span>
+<input class="w-full bg-surface-container-lowest border border-outline px-xl py-md font-body-md text-body-md focus:border-primary focus:ring-0 focus:border-2 outline-none transition-all pl-[52px]" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<!-- Action Button -->
+<button class="mt-md bg-primary text-on-primary font-label-bold text-label-bold py-md px-lg transition-all hover:bg-on-primary-fixed-variant active:scale-[0.98] border border-primary flex items-center justify-center gap-sm" type="submit">
+                    MASUK SISTEM
+                    <span class="material-symbols-outlined text-[20px]">login</span>
+</button>
+</form>
+<!-- Footer / Help Text -->
+<footer class="pt-md border-t border-outline-variant">
+<div class="flex gap-sm items-start">
+<span class="material-symbols-outlined text-outline text-[18px] mt-xs">info</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant leading-relaxed">
+                        Akses terbatas khusus akun resmi bentukan Admin. Harap hubungi bagian TI jika Anda mengalami kendala saat login.
+                    </p>
+</div>
+</footer>
+</div>
+<!-- Decorative Asymmetric Element -->
+<div class="mt-lg flex justify-between items-center opacity-50">
+<div class="h-[1px] bg-outline-variant flex-grow mr-md"></div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-[0.2em]">Lapas Painan</span>
+<div class="h-[1px] bg-outline-variant flex-grow ml-md"></div>
+</div>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.querySelector('form');
+            const button = document.querySelector('button');
+            const inputs = document.querySelectorAll('input');
+
+            // Simple focus effect logic
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    input.parentElement.querySelector('.material-symbols-outlined').style.color = '#004ac6';
+                });
+                input.addEventListener('blur', () => {
+                    input.parentElement.querySelector('.material-symbols-outlined').style.color = '#737686';
+                });
+            });
+
+            // Loading state simulation on submit
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                button.disabled = true;
+                button.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    MEMPROSES...
+                `;
+                
+                // Simulate delay
+                setTimeout(() => {
+                    button.innerHTML = 'BERHASIL MASUK';
+                    button.classList.replace('bg-primary', 'bg-emerald-600');
+                    button.classList.add('border-emerald-600');
+                }, 1500);
+            });
+        });
+    </script>
+</body></html>
