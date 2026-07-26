@@ -258,6 +258,9 @@ export default function App() {
 
   // ---- CRUD Agenda ----
   const canModifyAgenda = (a: Agenda) => {
+    // Super Admin memiliki hak akses penuh untuk mengedit/menghapus seluruh agenda
+    if (userRole === 'Super Admin') return true;
+
     const creatorUser = ((a as any).createdByUsername || a.responsible || (a as any).createdByName || '').toLowerCase();
     const uname = currentUsername.toLowerCase();
     const dname = userDisplayName.toLowerCase();
