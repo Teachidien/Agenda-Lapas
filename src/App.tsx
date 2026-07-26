@@ -336,7 +336,7 @@ export default function App() {
               </div>
               <div>
                 <h1 className="login-title">SINORA</h1>
-                <p className="login-subtitle">Agenda System</p>
+                <p className="login-subtitle">Rutan Kelas IIB Painan</p>
               </div>
             </header>
 
@@ -407,7 +407,7 @@ export default function App() {
 
           {/* Divider Bawah */}
           <div className="login-divider">
-            <hr /><span>Rutan IIB Painan</span><hr />
+            <hr /><span>Rutan Kelas IIB Painan</span><hr />
           </div>
         </div>
       </div>
@@ -430,7 +430,7 @@ export default function App() {
           </div>
           <div>
             <div className="sidebar-brand-name">SINORA</div>
-            <div className="sidebar-brand-sub">Rutan IIB Painan</div>
+            <div className="sidebar-brand-sub">Rutan Kelas IIB Painan</div>
           </div>
         </div>
 
@@ -506,7 +506,7 @@ export default function App() {
               <div className="page-header">
                 <div>
                   <h2>Dashboard Overview</h2>
-                  <p>Monitoring agenda harian dan status kegiatan Rutan IIB Painan.</p>
+                  <p>Monitoring agenda harian dan status kegiatan Rutan Kelas IIB Painan.</p>
                 </div>
                 <button className="add-agenda-btn" onClick={openAddModal}>
                   <span className="material-symbols-outlined">add_circle</span>
@@ -624,7 +624,7 @@ export default function App() {
               <div className="page-header">
                 <div>
                   <h2>Kelola Agenda</h2>
-                  <p>Daftar seluruh kegiatan dan agenda Rutan IIB Painan.</p>
+                  <p>Daftar seluruh kegiatan dan agenda Rutan Kelas IIB Painan.</p>
                 </div>
                 <button className="add-agenda-btn" onClick={openAddModal}>
                   <span className="material-symbols-outlined">add</span>
@@ -715,7 +715,7 @@ export default function App() {
           {activeTab === 'calendar' && (
             <>
               <div className="page-header">
-                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Rutan IIB Painan.</p></div>
+                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Rutan Kelas IIB Painan.</p></div>
               </div>
               <div className="calendar-wrap">
                 <div className="calendar-header">
