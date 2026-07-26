@@ -76,7 +76,7 @@ export default function App() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   // --- Navigation ---
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agenda' | 'calendar' | 'users' | 'reports' | 'guide'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'agenda' | 'users' | 'reports' | 'guide'>('dashboard');
 
   // --- Realtime Data ---
   const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -128,7 +128,7 @@ export default function App() {
 
   const userDisplayName = currentOfficer?.name || currentUsername || 'Petugas';
   const userRole = currentOfficer?.role || (currentUsername.toLowerCase() === 'glubis' ? 'Super Admin' : 'Petugas');
-  const userNip = currentOfficer?.nip || currentUsername.toUpperCase();
+  const userNip = userRole === 'Super Admin' ? '' : (currentOfficer?.nip || currentUsername.toUpperCase());
   const userDivision = currentOfficer?.division || 'KPR';
 
   const openProfileModal = () => {
@@ -549,7 +549,6 @@ export default function App() {
           {[
             { key: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
             { key: 'agenda', icon: 'event_note', label: 'Agenda' },
-            { key: 'calendar', icon: 'calendar_today', label: 'Calendar' },
             { key: 'users', icon: 'group', label: 'Users' },
             { key: 'reports', icon: 'description', label: 'Reports' },
             { key: 'guide', icon: 'menu_book', label: 'Panduan' },
@@ -595,7 +594,11 @@ export default function App() {
           <div className="topbar-user">
             <div className="topbar-user-info" onClick={openProfileModal} style={{ cursor: 'pointer' }} title="Edit Profil">
               <strong>{userDisplayName}</strong>
-              <span>NIP: {userNip}</span>
+              {userRole === 'Super Admin' ? (
+                <span style={{ color: '#004ac6', fontWeight: 700 }}>Super Admin</span>
+              ) : (
+                <span>NIP: {userNip || '-'}</span>
+              )}
             </div>
             <div className="topbar-user-avatar" onClick={openProfileModal} style={{ cursor: 'pointer' }} title="Edit Profil">
               <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#004ac6' }}>person</span>
@@ -826,45 +829,6 @@ export default function App() {
             </>
           )}
 
-          {/* ======================== CALENDAR ======================== */}
-          {activeTab === 'calendar' && (
-            <>
-              <div className="page-header">
-                <div><h2>Kalender Agenda</h2><p>Tampilan kalender bulanan seluruh kegiatan Rutan Kelas IIB Painan.</p></div>
-              </div>
-              <div className="calendar-wrap">
-                <div className="calendar-header">
-                  <h3>Juli 2026</h3>
-                  <span style={{ fontSize: 13, color: '#737686' }}>Bulan Berjalan</span>
-                </div>
-                <div className="cal-grid-header">
-                  {['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'].map(d => (
-                    <div key={d} className="cal-day-name">{d}</div>
-                  ))}
-                </div>
-                <div className="cal-grid">
-                  {/* Offset: July 2026 starts on Wednesday (index 3) */}
-                  {Array.from({ length: 3 }).map((_, i) => <div key={`empty-${i}`} className="cal-cell" style={{ background: '#f8f9ff' }}></div>)}
-                  {Array.from({ length: 31 }).map((_, i) => {
-                    const dayNum = i + 1;
-                    const dayStr = `2026-07-${String(dayNum).padStart(2, '0')}`;
-                    const dayAgendas = agendas.filter(a => (a.tanggal || a.date) === dayStr);
-                    const isToday = dayStr === todayStr;
-                    return (
-                      <div key={dayNum} className="cal-cell" style={{ background: isToday ? '#eff4ff' : '#ffffff', border: isToday ? '1px solid #004ac6' : undefined }}>
-                        <div className="cal-cell-num" style={{ color: isToday ? '#004ac6' : undefined, fontWeight: isToday ? 800 : undefined }}>{dayNum}</div>
-                        {dayAgendas.slice(0, 2).map(item => (
-                          <div key={item.id} className="cal-event" title={item.keteranganIsiSurat || item.title || ''}>{item.nomorSurat || item.keteranganIsiSurat || item.title}</div>
-                        ))}
-                        {dayAgendas.length > 2 && <div style={{ fontSize: 9, color: '#737686' }}>+{dayAgendas.length - 2} lagi</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-
           {/* ======================== USER MANAGEMENT ======================== */}
           {activeTab === 'users' && (
             <>
@@ -894,7 +858,7 @@ export default function App() {
                     <tr style={{ background: '#eff4ff' }}>
                       <td className="td-primary" style={{ color: '#004ac6' }}>glubis</td>
                       <td>Gilang Lubis</td>
-                      <td>19950815 202012 1 001</td>
+                      <td><span style={{ color: '#94a3b8', fontSize: 13 }}>—</span></td>
                       <td><span style={{ color: '#94a3b8', fontSize: 13 }}>—</span></td>
                       <td><span style={{ background: '#004ac6', color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 4 }}>Super Admin</span></td>
                       <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>Aktif</span></td>
@@ -1346,17 +1310,17 @@ export default function App() {
                       onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
                     />
                   </div>
-                  <div className={userRole === 'Super Admin' ? 'modal-field' : 'modal-grid-2'}>
-                    <div className="modal-field">
-                      <label>NIP Pegawai</label>
-                      <input
-                        type="text"
-                        placeholder="Contoh: 19950815 202012 1 001"
-                        value={profileForm.nip}
-                        onChange={e => setProfileForm({ ...profileForm, nip: e.target.value })}
-                      />
-                    </div>
-                    {userRole !== 'Super Admin' && (
+                  {userRole !== 'Super Admin' && (
+                    <div className="modal-grid-2">
+                      <div className="modal-field">
+                        <label>NIP Pegawai</label>
+                        <input
+                          type="text"
+                          placeholder="Contoh: 19950815 202012 1 001"
+                          value={profileForm.nip}
+                          onChange={e => setProfileForm({ ...profileForm, nip: e.target.value })}
+                        />
+                      </div>
                       <div className="modal-field">
                         <label>Divisi / Seksi</label>
                         <select value={profileForm.division} onChange={e => setProfileForm({ ...profileForm, division: e.target.value })}>
@@ -1365,8 +1329,8 @@ export default function App() {
                           <option>Pelayanan Tahanan</option>
                         </select>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <button type="submit" className="btn-save" disabled={profileSaveLoading} style={{ marginTop: 8 }}>
                     {profileSaveLoading ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
                   </button>

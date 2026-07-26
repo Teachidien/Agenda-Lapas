@@ -36,10 +36,9 @@ Setiap surat baru yang masuk atau dibuat wajib diinput ke sistem agar mendapatka
 
 ---
 
-## 🔍 4. Pencarian, Filter Tab & Kalender
+## 🔍 4. Pencarian & Filter Surat
 - **Pencarian Surat**: Ketik nomor surat, nama instansi, atau perihal pada kolom cari di menu **Agenda**.
-- **Filter Tab**: Gunakan tab *Hari Ini*, *Mendatang*, atau *Arsip* untuk menyaring data surat.
-- **Kalender Agenda**: Pilih menu **Calendar** untuk melihat jadwal kegiatan harian dalam tampilan kalender bulanan.
+- **Filter Tab**: Gunakan tab *Hari Ini*, *Mendatang*, atau *Arsip* untuk menyaring data surat sesuai kebutuhan.
 
 ---
 
