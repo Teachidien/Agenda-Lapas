@@ -549,7 +549,7 @@ export default function App() {
           {[
             { key: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
             { key: 'agenda', icon: 'event_note', label: 'Agenda' },
-            { key: 'users', icon: 'group', label: 'Users' },
+            ...(userRole === 'Super Admin' ? [{ key: 'users', icon: 'group', label: 'Kelola Pengguna' }] : []),
             { key: 'reports', icon: 'description', label: 'Reports' },
             { key: 'guide', icon: 'menu_book', label: 'Panduan' },
           ].map(item => (
@@ -829,11 +829,11 @@ export default function App() {
             </>
           )}
 
-          {/* ======================== USER MANAGEMENT ======================== */}
-          {activeTab === 'users' && (
+          {/* ======================== KELOLA PENGGUNA (Super Admin Only) ======================== */}
+          {activeTab === 'users' && userRole === 'Super Admin' && (
             <>
               <div className="user-page-header">
-                <div><h2>Manajemen User</h2><p>Daftar akun petugas dan admin yang terdaftar di sistem SINORA.</p></div>
+                <div><h2>Kelola Pengguna</h2><p>Daftar akun petugas dan admin yang terdaftar di sistem SINORA.</p></div>
                 <button className="add-agenda-btn" onClick={() => setShowAddUserModal(true)}>
                   <span className="material-symbols-outlined">person_add</span>
                   + Buat Akun Baru
