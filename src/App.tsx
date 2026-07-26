@@ -505,7 +505,7 @@ export default function App() {
               {/* Page Header */}
               <div className="page-header">
                 <div>
-                  <h2>Dashboard Overview</h2>
+                  <h2>SINORA (Sistem Informasi Penomoran Surat Administrasi) di Rumah Tahanan Negara Kelas IIB Painan</h2>
                   <p>Monitoring agenda harian dan status kegiatan Rutan Kelas IIB Painan.</p>
                 </div>
                 <button className="add-agenda-btn" onClick={openAddModal}>
