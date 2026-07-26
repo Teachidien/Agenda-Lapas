@@ -3,7 +3,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updatePassword
 } from 'firebase/auth';
 import {
   collection,
@@ -105,6 +106,106 @@ export default function App() {
   // --- User Form ---
   const [userForm, setUserForm] = useState({ username: '', name: '', nip: '', division: 'KPR', role: 'Petugas' as Officer['role'], password: '' });
   const [userCreateLoading, setUserCreateLoading] = useState(false);
+
+  // --- Profile Modal & Security State ---
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: '', nip: '', division: 'KPR' });
+  const [profileSaveLoading, setProfileSaveLoading] = useState(false);
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+  const [profileErrorMsg, setProfileErrorMsg] = useState('');
+  const [passwordForm, setPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+  const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+
+  // ---- Dynamic Logged In Officer Info ----
+  const currentUsername = currentUser?.email?.split('@')[0] || '';
+  const currentOfficer = officers.find(o => 
+    o.username.toLowerCase() === currentUsername.toLowerCase() || 
+    (o as any).email === currentUser?.email
+  );
+
+  const userDisplayName = currentOfficer?.name || currentUsername || 'Petugas';
+  const userRole = currentOfficer?.role || (currentUsername.toLowerCase() === 'glubis' ? 'Super Admin' : 'Petugas');
+  const userNip = currentOfficer?.nip || currentUsername.toUpperCase();
+  const userDivision = currentOfficer?.division || 'KPR';
+
+  const openProfileModal = () => {
+    setProfileForm({
+      name: currentOfficer?.name || userDisplayName,
+      nip: currentOfficer?.nip || (userNip.startsWith('NIP.') ? userNip.replace('NIP.', '').trim() : userNip),
+      division: currentOfficer?.division || userDivision
+    });
+    setPasswordForm({ newPassword: '', confirmPassword: '' });
+    setProfileSuccessMsg('');
+    setProfileErrorMsg('');
+    setPasswordSuccessMsg('');
+    setPasswordErrorMsg('');
+    setShowProfileModal(true);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaveLoading(true);
+    setProfileSuccessMsg('');
+    setProfileErrorMsg('');
+    try {
+      if (currentOfficer) {
+        await updateDoc(doc(db, 'officers', currentOfficer.id), {
+          name: profileForm.name,
+          nip: profileForm.nip,
+          division: profileForm.division
+        });
+      } else {
+        await addDoc(collection(db, 'officers'), {
+          username: currentUsername,
+          name: profileForm.name,
+          nip: profileForm.nip,
+          division: profileForm.division,
+          role: userRole,
+          email: currentUser?.email,
+          status: 'Aktif',
+          createdAt: serverTimestamp()
+        });
+      }
+      setProfileSuccessMsg('✅ Profil berhasil diperbarui!');
+    } catch (err: any) {
+      setProfileErrorMsg('❌ Gagal memperbarui profil: ' + err.message);
+    } finally {
+      setProfileSaveLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordErrorMsg('');
+    setPasswordSuccessMsg('');
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordErrorMsg('Password minimal 6 karakter!');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordErrorMsg('Konfirmasi password tidak cocok!');
+      return;
+    }
+    setPasswordChangeLoading(true);
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, passwordForm.newPassword);
+        setPasswordSuccessMsg('✅ Password berhasil diubah!');
+        setPasswordForm({ newPassword: '', confirmPassword: '' });
+      }
+    } catch (err: any) {
+      if (err.code === 'auth/requires-recent-login') {
+        setPasswordErrorMsg('🔒 Demi keamanan, silakan Logout dan Login kembali sebelum mengubah password.');
+      } else {
+        setPasswordErrorMsg('❌ Gagal mengubah password: ' + err.message);
+      }
+    } finally {
+      setPasswordChangeLoading(false);
+    }
+  };
 
   // ---- Firebase Listeners ----
   useEffect(() => {
@@ -381,6 +482,16 @@ export default function App() {
                 </div>
               </div>
 
+              <div style={{ textAlign: 'right', marginTop: '-8px', marginBottom: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  style={{ background: 'none', border: 'none', color: '#004ac6', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Lupa Password?
+                </button>
+              </div>
+
               <button type="submit" className="login-btn" disabled={loginLoading}>
                 {loginLoading ? (
                   <>
@@ -417,7 +528,6 @@ export default function App() {
   // ================================================================
   // DASHBOARD UTAMA (Setelah Login)
   // ================================================================
-  const userDisplayName = currentUser.email?.split('@')[0] || 'Admin';
 
   return (
     <div className="app-layout">
@@ -462,13 +572,13 @@ export default function App() {
         </button>
 
         {/* User Info */}
-        <div className="sidebar-user">
+        <div className="sidebar-user" onClick={openProfileModal} style={{ cursor: 'pointer' }} title="Klik untuk Edit Profil & Password">
           <div className="sidebar-user-avatar">{userDisplayName.charAt(0).toUpperCase()}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="sidebar-user-name">{userDisplayName}</div>
-            <div className="sidebar-user-role">Super Admin</div>
+            <div className="sidebar-user-role">{userRole}</div>
           </div>
-          <button className="sidebar-logout-btn" onClick={handleLogout} title="Keluar">
+          <button className="sidebar-logout-btn" onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Keluar">
             <span className="material-symbols-outlined">logout</span>
           </button>
         </div>
@@ -480,16 +590,20 @@ export default function App() {
         <header className="topbar">
           <div className="topbar-search">
             <span className="material-symbols-outlined">search</span>
-            <input placeholder="Search activities, officers.." readOnly />
+            <input placeholder="Cari kegiatan, surat, atau petugas..." readOnly />
           </div>
           <div className="topbar-user">
-            <div className="topbar-user-info">
+            <div className="topbar-user-info" onClick={openProfileModal} style={{ cursor: 'pointer' }} title="Edit Profil">
               <strong>{userDisplayName}</strong>
-              <span>NIP. {currentUser.email?.split('@')[0]?.toUpperCase()}</span>
+              <span>NIP: {userNip}</span>
             </div>
-            <div className="topbar-user-avatar">
+            <div className="topbar-user-avatar" onClick={openProfileModal} style={{ cursor: 'pointer' }} title="Edit Profil">
               <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#004ac6' }}>person</span>
             </div>
+            <button className="topbar-logout-btn" style={{ background: '#e0e7ff', color: '#004ac6', border: 'none' }} onClick={openProfileModal} title="Edit Profil & Keamanan">
+              <span className="material-symbols-outlined">manage_accounts</span>
+              Edit Profil
+            </button>
             <button className="topbar-logout-btn" onClick={handleLogout}>
               <span className="material-symbols-outlined">logout</span>
               Logout
@@ -1156,6 +1270,149 @@ export default function App() {
                 <button type="submit" className="btn-save">Simpan Perubahan</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================== MODAL LUPA PASSWORD ======================== */}
+      {showForgotPasswordModal && (
+        <div className="modal-overlay">
+          <div className="modal-box" style={{ maxWidth: 450 }}>
+            <div className="modal-header">
+              <h3>Informasi Lupa Password</h3>
+              <button className="modal-close-btn" onClick={() => setShowForgotPasswordModal(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="modal-body" style={{ textAlign: 'center', padding: '24px' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#eff6ff', color: '#004ac6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px auto' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 32 }}>lock_reset</span>
+              </div>
+              <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: '#0d1c2e' }}>Kebijakan Akun Instansi</h4>
+              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                Demi keamanan instansi Rutan Kelas IIB Painan, registrasi & reset password akun dilakukan secara terpusat oleh Admin.
+              </p>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: 8, margin: '16px 0', fontSize: 13, color: '#334155', border: '1px solid #e2e8f0' }}>
+                Silakan hubungi <strong>Super Admin / Pengelola IT</strong> Rutan Kelas IIB Painan untuk membantu mereset kata sandi akun Anda.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-save" style={{ width: '100%' }} onClick={() => setShowForgotPasswordModal(false)}>Saya Mengerti</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================== MODAL EDIT PROFIL & GANTI PASSWORD ======================== */}
+      {showProfileModal && (
+        <div className="modal-overlay">
+          <div className="modal-box" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <h3>Profil Saya & Keamanan Akun</h3>
+              <button className="modal-close-btn" onClick={() => setShowProfileModal(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              {/* Informational Badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#eff4ff', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#004ac6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18 }}>
+                  {userDisplayName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#0d1c2e' }}>{userDisplayName}</div>
+                  <div style={{ fontSize: 12, color: '#004ac6', fontWeight: 700 }}>ID / Username: {currentUsername} • Role: {userRole}</div>
+                </div>
+              </div>
+
+              {/* Form 1: Edit Informasi Profil */}
+              <form onSubmit={handleSaveProfile} style={{ marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid #e2e8f0' }}>
+                <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#475569', letterSpacing: 0.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, color: '#004ac6' }}>person_edit</span>
+                  Informasi Profil (Dapat diubah)
+                </h4>
+
+                {profileSuccessMsg && <div className="status-badge status-selesai" style={{ width: '100%', padding: '8px 12px', marginBottom: 12, fontSize: 13 }}>{profileSuccessMsg}</div>}
+                {profileErrorMsg && <div className="login-error" style={{ marginBottom: 12, fontSize: 13 }}>{profileErrorMsg}</div>}
+
+                <div className="modal-form">
+                  <div className="modal-field">
+                    <label>Nama Lengkap (Ubah jika ada penulisan keliru)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Masukkan nama lengkap Anda..."
+                      value={profileForm.name}
+                      onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>NIP Pegawai</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: 19950815 202012 1 001"
+                        value={profileForm.nip}
+                        onChange={e => setProfileForm({ ...profileForm, nip: e.target.value })}
+                      />
+                    </div>
+                    <div className="modal-field">
+                      <label>Divisi / Seksi</label>
+                      <select value={profileForm.division} onChange={e => setProfileForm({ ...profileForm, division: e.target.value })}>
+                        <option>KPR</option>
+                        <option>Pengelolaan</option>
+                        <option>Pelayanan Tahanan</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-save" disabled={profileSaveLoading} style={{ marginTop: 8 }}>
+                    {profileSaveLoading ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
+                  </button>
+                </div>
+              </form>
+
+              {/* Form 2: Ganti Password */}
+              <form onSubmit={handleChangePassword}>
+                <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', color: '#475569', letterSpacing: 0.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, color: '#004ac6' }}>key</span>
+                  Ubah Kata Sandi (Password)
+                </h4>
+
+                {passwordSuccessMsg && <div className="status-badge status-selesai" style={{ width: '100%', padding: '8px 12px', marginBottom: 12, fontSize: 13 }}>{passwordSuccessMsg}</div>}
+                {passwordErrorMsg && <div className="login-error" style={{ marginBottom: 12, fontSize: 13 }}>{passwordErrorMsg}</div>}
+
+                <div className="modal-form">
+                  <div className="modal-grid-2">
+                    <div className="modal-field">
+                      <label>Password Baru</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="Minimal 6 karakter"
+                        value={passwordForm.newPassword}
+                        onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      />
+                    </div>
+                    <div className="modal-field">
+                      <label>Konfirmasi Password Baru</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="Ketik ulang password baru"
+                        value={passwordForm.confirmPassword}
+                        onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-save" style={{ background: '#0d1c2e', marginTop: 8 }} disabled={passwordChangeLoading}>
+                    {passwordChangeLoading ? 'Memproses...' : 'Ubah Kata Sandi'}
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={() => setShowProfileModal(false)}>Tutup</button>
+            </div>
           </div>
         </div>
       )}
