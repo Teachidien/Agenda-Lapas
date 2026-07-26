@@ -131,6 +131,15 @@ export default function App() {
   const userNip = userRole === 'Super Admin' ? '' : (currentOfficer?.nip || currentUsername.toUpperCase());
   const userDivision = currentOfficer?.division || 'KPR';
 
+  // --- Smart Auto-complete Suggestions ---
+  const uniqueAddresses = Array.from(
+    new Set(agendas.map(a => a.alamatSurat || a.location || '').filter(Boolean))
+  );
+
+  const uniqueDescriptions = Array.from(
+    new Set(agendas.map(a => a.keteranganIsiSurat || a.title || '').filter(Boolean))
+  );
+
   const openProfileModal = () => {
     setProfileForm({
       name: currentOfficer?.name || userDisplayName,
@@ -1108,24 +1117,43 @@ export default function App() {
                   </div>
 
                   <div className="modal-field">
-                    <label>Alamat Surat (Pengirim / Tujuan)</label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Alamat Surat (Pengirim / Tujuan)
+                      <span style={{ fontSize: 11, background: '#e0e7ff', color: '#004ac6', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>💡 Auto-complete Cerdas</span>
+                    </label>
                     <input
                       type="text"
                       required
-                      placeholder="Contoh: Kanwil Kemenkumham Sumbar / Bupati Pesisir Selatan"
+                      list="alamat-suggestions"
+                      placeholder="Ketik atau pilih instansi pengirim/tujuan dari riwayat..."
                       value={agendaForm.alamatSurat}
                       onChange={e => setAgendaForm({ ...agendaForm, alamatSurat: e.target.value })}
                     />
+                    <datalist id="alamat-suggestions">
+                      {uniqueAddresses.map((addr, i) => (
+                        <option key={i} value={addr} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="modal-field">
-                    <label>Keterangan Isi Surat</label>
-                    <textarea
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Keterangan Isi Surat
+                      <span style={{ fontSize: 11, background: '#e0e7ff', color: '#004ac6', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>💡 Auto-complete Cerdas</span>
+                    </label>
+                    <input
+                      type="text"
                       required
-                      placeholder="Tuliskan ringkasan / perihal isi surat secara jelas..."
+                      list="keterangan-suggestions"
+                      placeholder="Ketik perihal surat atau pilih dari riwayat..."
                       value={agendaForm.keteranganIsiSurat}
                       onChange={e => setAgendaForm({ ...agendaForm, keteranganIsiSurat: e.target.value })}
-                    ></textarea>
+                    />
+                    <datalist id="keterangan-suggestions">
+                      {uniqueDescriptions.map((desc, i) => (
+                        <option key={i} value={desc} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="modal-field">
