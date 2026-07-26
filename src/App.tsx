@@ -725,33 +725,6 @@ export default function App() {
                 {/* Right Panel */}
                 <div className="right-panel">
                   <div className="panel-card">
-                    <h4>Petugas Terdaftar</h4>
-                    {officers.slice(0, 3).length === 0 ? (
-                      <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '16px 0' }}>Belum ada petugas terdaftar.</div>
-                    ) : (
-                      officers.slice(0, 3).map(o => (
-                        <div key={o.id} className="officer-item">
-                          <div className="officer-avatar"><span className="material-symbols-outlined">person</span></div>
-                          <div>
-                            <div className="officer-name">{o.name || o.username}</div>
-                            <div className="officer-role">{o.division}</div>
-                          </div>
-                          <div className="officer-status"></div>
-                        </div>
-                      ))
-                    )}
-                    {/* Super Admin hardcoded */}
-                    <div className="officer-item">
-                      <div className="officer-avatar"><span className="material-symbols-outlined">admin_panel_settings</span></div>
-                      <div>
-                        <div className="officer-name">Gilang Lubis</div>
-                        <div className="officer-role">Super Admin</div>
-                      </div>
-                      <div className="officer-status"></div>
-                    </div>
-                  </div>
-
-                  <div className="panel-card">
                     <h4>Arsip Surat Terbaru</h4>
                     {agendas.slice(-4).reverse().length === 0 ? (
                       <div style={{ color: '#737686', fontSize: 12, textAlign: 'center', padding: '8px 0' }}>Belum ada arsip surat.</div>
