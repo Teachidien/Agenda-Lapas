@@ -895,7 +895,7 @@ export default function App() {
                       <td className="td-primary" style={{ color: '#004ac6' }}>glubis</td>
                       <td>Gilang Lubis</td>
                       <td>19950815 202012 1 001</td>
-                      <td><span className="division-tag">TI & Admin</span></td>
+                      <td><span style={{ color: '#94a3b8', fontSize: 13 }}>—</span></td>
                       <td><span style={{ background: '#004ac6', color: 'white', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 4 }}>Super Admin</span></td>
                       <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>Aktif</span></td>
                       <td style={{ textAlign: 'center', color: '#b0b0c0', fontSize: 11 }}>—</td>
@@ -910,7 +910,7 @@ export default function App() {
                         <td className="td-primary">{user.username}</td>
                         <td>{user.name}</td>
                         <td>{user.nip || '-'}</td>
-                        <td><span className={divisionColor(user.division)}>{user.division}</span></td>
+                        <td>{user.role === 'Super Admin' ? <span style={{ color: '#94a3b8', fontSize: 13 }}>—</span> : <span className={divisionColor(user.division)}>{user.division}</span>}</td>
                         <td><span style={{ background: '#e6eeff', color: '#004ac6', padding: '2px 8px', fontSize: 11, fontWeight: 700, borderRadius: 4 }}>{user.role}</span></td>
                         <td><span className="status-badge status-selesai" style={{ fontSize: 10 }}>{user.status}</span></td>
                         <td>
@@ -1346,7 +1346,7 @@ export default function App() {
                       onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
                     />
                   </div>
-                  <div className="modal-grid-2">
+                  <div className={userRole === 'Super Admin' ? 'modal-field' : 'modal-grid-2'}>
                     <div className="modal-field">
                       <label>NIP Pegawai</label>
                       <input
@@ -1356,14 +1356,16 @@ export default function App() {
                         onChange={e => setProfileForm({ ...profileForm, nip: e.target.value })}
                       />
                     </div>
-                    <div className="modal-field">
-                      <label>Divisi / Seksi</label>
-                      <select value={profileForm.division} onChange={e => setProfileForm({ ...profileForm, division: e.target.value })}>
-                        <option>KPR</option>
-                        <option>Pengelolaan</option>
-                        <option>Pelayanan Tahanan</option>
-                      </select>
-                    </div>
+                    {userRole !== 'Super Admin' && (
+                      <div className="modal-field">
+                        <label>Divisi / Seksi</label>
+                        <select value={profileForm.division} onChange={e => setProfileForm({ ...profileForm, division: e.target.value })}>
+                          <option>KPR</option>
+                          <option>Pengelolaan</option>
+                          <option>Pelayanan Tahanan</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                   <button type="submit" className="btn-save" disabled={profileSaveLoading} style={{ marginTop: 8 }}>
                     {profileSaveLoading ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
