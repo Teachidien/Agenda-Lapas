@@ -75,7 +75,7 @@ export default function App() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   // --- Navigation ---
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agenda' | 'calendar' | 'users' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'agenda' | 'calendar' | 'users' | 'reports' | 'guide'>('dashboard');
 
   // --- Realtime Data ---
   const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -442,6 +442,7 @@ export default function App() {
             { key: 'calendar', icon: 'calendar_today', label: 'Calendar' },
             { key: 'users', icon: 'group', label: 'Users' },
             { key: 'reports', icon: 'description', label: 'Reports' },
+            { key: 'guide', icon: 'menu_book', label: 'Panduan' },
           ].map(item => (
             <button
               key={item.key}
@@ -866,6 +867,88 @@ export default function App() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ======================== BUKU PANDUAN PETUGAS ======================== */}
+          {activeTab === 'guide' && (
+            <>
+              <div className="page-header">
+                <div>
+                  <h2>Buku Panduan Petugas</h2>
+                  <p>Panduan praktis penggunaan aplikasi SINORA untuk Petugas Rutan Kelas IIB Painan.</p>
+                </div>
+                <button className="print-btn" onClick={() => window.print()}>
+                  <span className="material-symbols-outlined">print</span>
+                  Cetak / Download PDF
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                {/* 1. Akses & Login */}
+                <div className="panel-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 28, color: '#004ac6' }}>login</span>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: '#0d1c2e' }}>1. Akses & Login Sistem</h3>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                    Masuk menggunakan <strong>ID User / NIP</strong> dan <strong>Password</strong> akun petugas Anda.
+                  </p>
+                  <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '8px', borderLeft: '4px solid #004ac6', marginTop: '12px' }}>
+                    <ol style={{ margin: 0, paddingLeft: '16px', fontSize: 14, color: '#334155', lineHeight: 1.7 }}>
+                      <li>Buka alamat web SINORA di browser (Chrome/Edge).</li>
+                      <li>Ketikkan Username atau NIP resmi Anda pada kolom <strong>ID USER / NIP</strong>.</li>
+                      <li>Ketikkan kata sandi, lalu klik <strong>MASUK SISTEM</strong>.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* 2. Menginput Agenda Surat */}
+                <div className="panel-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 28, color: '#004ac6' }}>edit_note</span>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: '#0d1c2e' }}>2. Cara Menginput Surat & Agenda Baru</h3>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                    Setiap surat masuk, surat keluar, atau agenda kegiatan harus dicatatkan agar memperoleh <strong>Nomor Urut Otomatis</strong> dari sistem.
+                  </p>
+                  <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '8px', borderLeft: '4px solid #004ac6', marginTop: '12px' }}>
+                    <ol style={{ margin: 0, paddingLeft: '16px', fontSize: 14, color: '#334155', lineHeight: 1.7 }}>
+                      <li>Klik tombol <strong>+ TAMBAH AGENDA BARU</strong> di bagian atas atau sidebar.</li>
+                      <li>Ketik <strong>Nomor Surat</strong> (Contoh: <code>W.13.PAS.PAS.12-UM.01.01-102</code>).</li>
+                      <li>Pilih <strong>Tanggal</strong> surat atau jadwal kegiatan.</li>
+                      <li>Ketik <strong>Alamat Surat</strong> (Instansi Pengirim / Tujuan).</li>
+                      <li>Ketik <strong>Keterangan Isi Surat</strong> (Perihal ringkas).</li>
+                      <li>Pilih <strong>Divisi</strong> pengelola (<code>KPR</code>, <code>Pengelolaan</code>, atau <code>Pelayanan Tahanan / Kamtib</code>).</li>
+                      <li>Klik <strong>Simpan Agenda</strong>. Sistem akan membuatkan Nomor Urut secara otomatis.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* 3. Pencarian & Filter Surat */}
+                <div className="panel-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 28, color: '#004ac6' }}>search</span>
+                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: '#0d1c2e' }}>3. Pencarian, Filter & Kalender Kegiatan</h3>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: 14, color: '#334155', lineHeight: 1.7 }}>
+                    <li><strong>Pencarian Surat:</strong> Ketikkan nomor surat, perihal, atau instansi pada kolom pencarian di menu <strong>Agenda</strong>.</li>
+                    <li><strong>Filter Tab:</strong> Gunakan tab <em>Hari Ini</em>, <em>Mendatang</em>, atau <em>Arsip</em> untuk menyaring tampilan.</li>
+                    <li><strong>Kalender Agenda:</strong> Pilih menu <strong>Calendar</strong> untuk melihat agenda kegiatan harian dalam tampilan kalender bulanan.</li>
+                  </ul>
+                </div>
+
+                {/* 4. Perbaikan Data & Bantuan */}
+                <div className="panel-card" style={{ padding: '24px', background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 24, color: '#2563eb' }}>help</span>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#1e40af' }}>Kendala Input / Lupa Password?</h4>
+                  </div>
+                  <p style={{ fontSize: 14, color: '#1e3a8a', margin: 0, lineHeight: 1.6 }}>
+                    Jika ada kesalahan input yang tidak bisa diubah atau terjadi kendala saat login, silakan laporkan ke bagian Pengelola IT / Admin Rutan Kelas IIB Painan.
+                  </p>
                 </div>
               </div>
             </>

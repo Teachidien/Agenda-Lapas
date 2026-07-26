@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buku Panduan Pengguna SINORA — Rutan Kelas IIB Painan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --primary-hover: #003896;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 60px;
+    }
+
+    /* Top Banner / Navbar */
+    .navbar {
+      background: linear-gradient(135deg, #0d1c2e 0%, #004ac6 100%);
+      color: white;
+      padding: 24px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      background: rgba(255, 255, 255, 0.15);
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .brand h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .brand p {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-print {
+      background: white;
+      color: var(--primary);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .btn-print:hover {
+      background: #f0f4ff;
+      transform: translateY(-1px);
+    }
+
+    /* Container Layout */
+    .container {
+      max-width: 1000px;
+      margin: 32px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 32px;
+    }
+
+    /* Sidebar Navigation */
+    .toc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: sticky;
+      top: 110px;
+      height: fit-content;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .toc-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .toc-list a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+
+    .toc-list a:hover {
+      background: #eff4ff;
+      color: var(--primary);
+    }
+
+    /* Main Content */
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      scroll-margin-top: 110px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0d1c2e;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+
+    .section-title .material-symbols-outlined {
+      color: var(--primary);
+      font-size: 28px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #334155;
+      font-size: 15px;
+    }
+
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    /* Badges */
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .role-super { background: #dbeafe; color: #1e40af; }
+    .role-admin { background: #e0e7ff; color: #3730a3; }
+    .role-petugas { background: #f1f5f9; color: #475569; }
+
+    /* Step Box */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 16px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .step-num {
+      background: var(--primary);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      margin-bottom: 0;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    /* Tip Box */
+    .tip-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin: 16px 0;
+    }
+
+    .tip-box .material-symbols-outlined {
+      color: #2563eb;
+    }
+
+    /* Print Stylesheet */
+    @media print {
+      body {
+        background: white;
+        padding-bottom: 0;
+      }
+      .navbar {
+        background: none !important;
+        color: black !important;
+        padding: 0 0 20px 0;
+        border-bottom: 2px solid black;
+        box-shadow: none;
+      }
+      .brand-icon {
+        background: #f0f0f0;
+        color: black;
+      }
+      .btn-print, .toc-card {
+        display: none !important;
+      }
+      .container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .section-card {
+        border: none;
+        box-shadow: none;
+        padding: 16px 0;
+        page-break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .toc-card {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <span class="material-symbols-outlined" style="font-size: 28px;">shield</span>
+      </div>
+      <div>
+        <h1>Buku Panduan SINORA</h1>
+        <p>Sistem Informasi Penomoran Surat Administrasi — Rutan Kelas IIB Painan</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-print" onclick="window.print()">
+        <span class="material-symbols-outlined">print</span>
+        Cetak / Simpan PDF
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Sidebar / Table of Contents -->
+    <nav class="toc-card">
+      <div class="toc-title">Daftar Isi</div>
+      <ul class="toc-list">
+        <li><a href="#pendahuluan"><span class="material-symbols-outlined">info</span>1. Pendahuluan</a></li>
+        <li><a href="#hak-akses"><span class="material-symbols-outlined">badge</span>2. Hak Akses (Role)</a></li>
+        <li><a href="#login"><span class="material-symbols-outlined">login</span>3. Cara Login</a></li>
+        <li><a href="#agenda"><span class="material-symbols-outlined">edit_note</span>4. Kelola Agenda Surat</a></li>
+        <li><a href="#calendar"><span class="material-symbols-outlined">calendar_month</span>5. Kalender Agenda</a></li>
+        <li><a href="#users"><span class="material-symbols-outlined">group</span>6. Manajemen User</a></li>
+        <li><a href="#reports"><span class="material-symbols-outlined">print</span>7. Cetak Laporan</a></li>
+        <li><a href="#faq"><span class="material-symbols-outlined">help</span>8. Tanya Jawab (FAQ)</a></li>
+      </ul>
+    </nav>
+
+    <!-- Content Sections -->
+    <main class="content">
+
+      <!-- Section 1 -->
+      <section id="pendahuluan" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">info</span>
+          1. Pendahuluan
+        </h2>
+        <p><strong>SINORA</strong> (<em>Sistem Informasi Penomoran Surat Administrasi</em>) adalah aplikasi berbasis web yang dirancang khusus untuk mempermudah penomoran, pencatatan, pengarsipan, dan pengelolaan agenda surat-menyurat di lingkungan <strong>Rumah Tahanan Negara Kelas IIB Painan</strong>.</p>
+        <p>Dengan SINORA, penomoran urut surat masuk/keluar dilakukan secara otomatis dan transparan sehingga mencegah duplikasi nomor serta mempermudah pencarian arsip secara real-time.</p>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="hak-akses" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">badge</span>
+          2. Hak Akses Pengguna (Role)
+        </h2>
+        <p>Aplikasi SINORA membagi hak akses ke dalam 3 peran utama:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Peran / Role</th>
+              <th>Deskripsi Akses & Wewenang</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="role-badge role-super">Super Admin</span></td>
+              <td>Akses penuh ke seluruh fitur sistem, termasuk pembuatan & manajemen akun petugas, pengelolaan agenda, dan cetak laporan.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-admin">Admin</span></td>
+              <td>Dapat menambah, mengubah, dan menghapus data agenda surat, serta mengunduh laporan rekapitulasi.</td>
+            </tr>
+            <tr>
+              <td><span class="role-badge role-petugas">Petugas</span></td>
+              <td>Dapat menginput agenda surat baru divisi terkait, mencari arsip, serta melihat kalender kegiatan harian.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="login" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">login</span>
+          3. Langkah-langkah Login (Masuk Sistem)
+        </h2>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Buka Peramban / Browser</h4>
+              <p>Akses alamat aplikasi SINORA di peramban komputer/HP Anda (misal: Google Chrome atau Microsoft Edge).</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Masukkan ID User / NIP & Password</h4>
+              <p>Ketikkan Username atau NIP terdaftar serta kata sandi akun Anda pada kolom login.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Klik Tombol "Masuk Sistem"</h4>
+              <p>Sistem akan memverifikasi akun Anda dan mengarahkan ke halaman Dashboard Utama.</p>
+            </div>
+          </div>
+        </div>
+        <div class="tip-box">
+          <span class="material-symbols-outlined">lightbulb</span>
+          <div>
+            <strong>Penting:</strong> Jika lupa kata sandi atau akun terblokir, hubungi Admin/Tim TI Rutan Kelas IIB Painan untuk melakukan reset password.
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="agenda" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">edit_note</span>
+          4. Pengelolaan Agenda & Penomoran Surat
+        </h2>
+        <p>Menu <strong>Agenda</strong> adalah pusat pencatatan surat administrasi Rutan Kelas IIB Painan.</p>
+
+        <h3 style="font-size: 16px; margin: 16px 0 8px 0;">Cara Menambah Agenda Surat Baru:</h3>
+        <ol style="margin-left: 20px; font-size: 14px; color: #334155;">
+          <li>Klik tombol <strong>"+ TAMBAH AGENDA BARU"</strong>.</li>
+          <li>Isi formulir yang tersedia:
+            <ul style="margin-left: 20px; margin-top: 4px;">
+              <li><strong>Nomor Surat:</strong> Isikan nomor resmi surat.</li>
+              <li><strong>Tanggal:</strong> Pilih tanggal surat/kegiatan.</li>
+              <li><strong>Alamat Surat:</strong> Isikan instansi pengirim atau tujuan.</li>
+              <li><strong>Keterangan Isi Surat:</strong> Perihal ringkas isi surat.</li>
+              <li><strong>Divisi:</strong> Pilih bagian pemilik surat (<em>KPR</em>, <em>Pengelolaan</em>, atau <em>Pelayanan Tahanan / Kamtib</em>).</li>
+            </ul>
+          </li>
+          <li><strong>Nomor Urut</strong> akan terisi secara otomatis oleh sistem.</li>
+          <li>Klik <strong>"Simpan Agenda"</strong>.</li>
+        </ol>
+
+        <h3 style="font-size: 16px; margin: 20px 0 8px 0;">Pencarian & Filter Tab:</h3>
+        <p style="font-size: 14px;">Gunakan kolom pencarian di atas tabel untuk mencari surat berdasarkan nomor, nama instansi, atau kata kunci. Gunakan tab <strong>Hari Ini</strong>, <strong>Mendatang</strong>, atau <strong>Arsip</strong> untuk menyaring data dengan cepat.</p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="calendar" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">calendar_month</span>
+          5. Kalender Agenda (Calendar View)
+        </h2>
+        <p>Tampilan kalender menyajikan ringkasan kegiatan dan surat dalam format bulanan.</p>
+        <ul style="margin-left: 20px; font-size: 14px; color: #334155;">
+          <li>Tanggal hari ini disorot dengan warna khusus (Biru).</li>
+          <li>Arahkan kursor ke label agenda pada tanggal tertentu untuk melihat perihal kegiatan secara mendetail.</li>
+        </ul>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="users" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">group</span>
+          6. Manajemen User / Akun Petugas
+        </h2>
+        <p>Fitur ini digunakan oleh Super Admin / Admin untuk mengelola anggota yang terdaftar di aplikasi.</p>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Membuat Akun Baru</h4>
+              <p>Klik <strong>"+ Buat Akun Baru"</strong>, masukkan Username, Nama Lengkap, NIP, Divisi, Role (Petugas/Admin), dan Password awal.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Mengedit / Nonaktifkan Akun</h4>
+              <p>Gunakan tombol edit (✏️) untuk mengubah info petugas, atau hapus (🗑️) jika petugas mutasi/nonaktif.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="reports" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">print</span>
+          7. Cetak Laporan & Export PDF
+        </h2>
+        <p>Untuk mencetak rekapitulasi agenda surat resmi:</p>
+        <ol style="margin-left: 20px; font-size: 14px; color: #334155;">
+          <li>Buka menu <strong>Reports</strong>.</li>
+          <li>Periksa pratinjau rekapitulasi data.</li>
+          <li>Klik tombol <strong>"Cetak / Download PDF"</strong>.</li>
+          <li>Pilih printer fisik atau opsi <strong>"Save as PDF"</strong> untuk mengunduh berkas digital.</li>
+        </ol>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="faq" class="section-card">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">help</span>
+          8. Tanya Jawab (FAQ)
+        </h2>
+        <h4 style="font-size: 15px; margin-bottom: 4px;">Q: Apakah aplikasi ini bisa dibuka di HP?</h4>
+        <p style="font-size: 14px; color: #475569;">A: Ya, aplikasi SINORA dirancang responsif dan dapat diakses dari browser HP, tablet, maupun komputer/laptop.</p>
+
+        <h4 style="font-size: 15px; margin-bottom: 4px;">Q: Bagaimana jika terjadi kesalahan penginputan nomor surat?</h4>
+        <p style="font-size: 14px; color: #475569;">A: Petugas atau Admin dapat menekan tombol edit (✏️) pada tabel agenda untuk memperbaiki nomor atau perihal surat.</p>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>
