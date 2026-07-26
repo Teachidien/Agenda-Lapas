@@ -257,19 +257,40 @@ export default function App() {
   const handleLogout = async () => { try { await signOut(auth); } catch {/* ignore */} };
 
   // ---- CRUD Agenda ----
+  const canModifyAgenda = (a: Agenda) => {
+    const creatorUser = ((a as any).createdByUsername || a.responsible || (a as any).createdByName || '').toLowerCase();
+    const uname = currentUsername.toLowerCase();
+    const dname = userDisplayName.toLowerCase();
+    const uid = currentUser?.uid;
+
+    if ((a as any).createdByUid && uid && (a as any).createdByUid === uid) {
+      return true;
+    }
+    return (
+      creatorUser === uname ||
+      creatorUser === dname ||
+      (currentOfficer && creatorUser === currentOfficer.username.toLowerCase())
+    );
+  };
+
   const openAddModal = () => {
     setEditingAgenda(null);
     setAgendaForm({ ...emptyAgendaForm });
     setShowAddAgendaModal(true);
   };
+
   const openEditModal = (a: Agenda) => {
+    if (!canModifyAgenda(a)) {
+      alert(`❌ Akses Ditolak!\nAgenda ini diinputkan oleh "${(a as any).createdByName || a.responsible || 'pengguna lain'}". Anda hanya dapat mengedit agenda yang Anda inputkan sendiri.`);
+      return;
+    }
     setEditingAgenda(a);
     setAgendaForm({
       nomorSurat: a.nomorSurat || '',
       tanggal: a.tanggal || a.date || todayStr,
       alamatSurat: a.alamatSurat || a.location || '',
       keteranganIsiSurat: a.keteranganIsiSurat || a.title || a.description || '',
-      division: a.division || 'Kamtib'
+      division: a.division || 'KPR'
     });
     setShowAddAgendaModal(true);
   };
@@ -278,6 +299,10 @@ export default function App() {
     e.preventDefault();
     try {
       if (editingAgenda) {
+        if (!canModifyAgenda(editingAgenda)) {
+          alert('❌ Akses Ditolak! Anda tidak memiliki izin untuk mengedit agenda milik pengguna lain.');
+          return;
+        }
         await updateDoc(doc(db, 'agendas', editingAgenda.id), {
           nomorSurat: agendaForm.nomorSurat,
           tanggal: agendaForm.tanggal,
@@ -301,7 +326,10 @@ export default function App() {
           keteranganIsiSurat: agendaForm.keteranganIsiSurat,
           title: agendaForm.keteranganIsiSurat,
           division: agendaForm.division,
-          responsible: currentUser?.email?.split('@')[0] || 'Admin',
+          responsible: userDisplayName,
+          createdByName: userDisplayName,
+          createdByUsername: currentUsername,
+          createdByUid: currentUser?.uid,
           createdAt: serverTimestamp()
         });
       }
@@ -310,9 +338,13 @@ export default function App() {
     } catch (err: any) { alert('Gagal menyimpan: ' + err.message); }
   };
 
-  const deleteAgenda = async (id: string) => {
-    if (window.confirm('Hapus agenda ini?')) {
-      try { await deleteDoc(doc(db, 'agendas', id)); } catch (err: any) { alert('Gagal menghapus: ' + err.message); }
+  const deleteAgenda = async (a: Agenda) => {
+    if (!canModifyAgenda(a)) {
+      alert(`❌ Akses Ditolak!\nAgenda ini diinputkan oleh "${(a as any).createdByName || a.responsible || 'pengguna lain'}". Anda hanya dapat menghapus agenda yang Anda inputkan sendiri.`);
+      return;
+    }
+    if (window.confirm(`Hapus agenda "${a.nomorSurat || a.keteranganIsiSurat}"?`)) {
+      try { await deleteDoc(doc(db, 'agendas', a.id)); } catch (err: any) { alert('Gagal menghapus: ' + err.message); }
     }
   };
 
@@ -680,6 +712,7 @@ export default function App() {
                             </div>
                             <div className="timeline-meta">
                               <span><span className="material-symbols-outlined">markunread_mailbox</span>Tujuan/Pengirim: {item.alamatSurat || item.location || '-'}</span>
+                              <span><span className="material-symbols-outlined">person</span>Penginput: {(item as any).createdByName || item.responsible || 'Admin'}</span>
                               <span><span className="material-symbols-outlined">calendar_today</span>{item.tanggal || item.date}</span>
                             </div>
                           </div>
@@ -783,46 +816,64 @@ export default function App() {
                       <th>Alamat Surat</th>
                       <th>Keterangan Isi Surat</th>
                       <th>Divisi</th>
+                      <th>Penginput Agenda</th>
                       <th style={{ textAlign: 'center' }}>Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAgendas.length === 0 ? (
                       <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#737686' }}>
+                        <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#737686' }}>
                           Tidak ada agenda surat yang sesuai.
                         </td>
                       </tr>
-                    ) : filteredAgendas.map((agenda, index) => (
-                      <tr key={agenda.id}>
-                        <td style={{ textAlign: 'center', fontWeight: 700, color: '#004ac6' }}>
-                          {agenda.nomorUrut || index + 1}
-                        </td>
-                        <td>
-                          <div className="td-primary">{agenda.nomorSurat || '-'}</div>
-                        </td>
-                        <td>
-                          <div className="td-primary">{agenda.tanggal || agenda.date}</div>
-                        </td>
-                        <td>
-                          <div className="td-primary">{agenda.alamatSurat || agenda.location || '-'}</div>
-                        </td>
-                        <td>
-                          <div className="td-primary">{agenda.keteranganIsiSurat || agenda.title || '-'}</div>
-                        </td>
-                        <td><span className={divisionColor(agenda.division || '')}>{agenda.division || 'Umum'}</span></td>
-                        <td>
-                          <div className="action-btns">
-                            <button className="action-btn edit" onClick={() => openEditModal(agenda)} title="Edit">
-                              <span className="material-symbols-outlined">edit</span>
-                            </button>
-                            <button className="action-btn delete" onClick={() => deleteAgenda(agenda.id)} title="Hapus">
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    ) : filteredAgendas.map((agenda, index) => {
+                      const isOwner = canModifyAgenda(agenda);
+                      const creatorName = (agenda as any).createdByName || agenda.responsible || (agenda as any).createdByUsername || 'Admin';
+                      return (
+                        <tr key={agenda.id}>
+                          <td style={{ textAlign: 'center', fontWeight: 700, color: '#004ac6' }}>
+                            {agenda.nomorUrut || index + 1}
+                          </td>
+                          <td>
+                            <div className="td-primary">{agenda.nomorSurat || '-'}</div>
+                          </td>
+                          <td>
+                            <div className="td-primary">{agenda.tanggal || agenda.date}</div>
+                          </td>
+                          <td>
+                            <div className="td-primary">{agenda.alamatSurat || agenda.location || '-'}</div>
+                          </td>
+                          <td>
+                            <div className="td-primary">{agenda.keteranganIsiSurat || agenda.title || '-'}</div>
+                          </td>
+                          <td><span className={divisionColor(agenda.division || '')}>{agenda.division || 'Umum'}</span></td>
+                          <td>
+                            <div className="td-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#0d1c2e' }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#004ac6' }}>account_circle</span>
+                              <strong>{creatorName}</strong>
+                            </div>
+                          </td>
+                          <td>
+                            {isOwner ? (
+                              <div className="action-btns">
+                                <button className="action-btn edit" onClick={() => openEditModal(agenda)} title="Edit Agenda Saya">
+                                  <span className="material-symbols-outlined">edit</span>
+                                </button>
+                                <button className="action-btn delete" onClick={() => deleteAgenda(agenda)} title="Hapus Agenda Saya">
+                                  <span className="material-symbols-outlined">delete</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} title="Terkunci: Hanya penginput yang dapat mengedit/menghapus agenda ini">
+                                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>lock</span>
+                                Terkunci
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
